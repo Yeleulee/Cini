@@ -19,6 +19,16 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ collections, a
     return col.movieIds.map(id => allMovies.find(m => m.id === id)).filter(Boolean) as Movie[];
   };
 
+  const handlePlayCollection = () => {
+    if (!activeCollection) return;
+    const movies = getCollectionMovies(activeCollection);
+    if (movies.length === 0) return;
+    
+    // Shuffle the collection and play the first movie
+    const shuffled = [...movies].sort(() => Math.random() - 0.5);
+    onSelectMovie(shuffled[0]);
+  };
+
   return (
     <div className="min-h-screen bg-[#09090b] text-white pt-20 px-6 md:px-0 overflow-x-hidden">
       
@@ -132,7 +142,10 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ collections, a
                              <p className="text-xl text-zinc-400 font-serif italic max-w-lg border-l-4 border-yellow-500 pl-6">
                                 "{activeCollection.description}"
                              </p>
-                             <button className="flex items-center gap-4 px-8 py-4 bg-white text-black rounded-full font-bold hover:scale-105 transition-transform shadow-2xl">
+                             <button 
+                                onClick={handlePlayCollection}
+                                className="flex items-center gap-4 px-8 py-4 bg-white text-black rounded-full font-bold hover:scale-105 active:scale-95 transition-transform shadow-2xl"
+                             >
                                 <Shuffle size={20} /> Play Collection
                              </button>
                          </div>

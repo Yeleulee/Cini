@@ -36,16 +36,44 @@ const App: React.FC = () => {
     initData();
   }, []);
 
+  // Filtering Logic
   useEffect(() => {
-    // Filter logic based on tab
-    if (activeTab === 'HOME') {
-        setFilteredMovies(movies);
-    } else if (activeTab === 'MOVIES') {
-        setFilteredMovies(movies.filter(m => m.type === 'movie'));
-    } else if (activeTab === 'SERIES') {
-        setFilteredMovies(movies.filter(m => m.type === 'series'));
-    }
-  }, [activeTab, movies]);
+    const filterContent = () => {
+      let base = [...movies];
+      
+      // Filter by Tab
+      if (activeTab === 'MOVIES') {
+          base = base.filter(m => m.type === 'movie');
+      } else if (activeTab === 'SERIES') {
+          base = base.filter(m => m.type === 'series');
+      }
+
+      // Filter by Category
+      if (activeCategory === 'My List') {
+        try {
+          const watchlist = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
+          const watchlistIds = watchlist.map((m: Movie) => m.id);
+          base = base.filter(m => watchlistIds.includes(m.id));
+        } catch (e) {
+          base = [];
+        }
+      } else if (activeCategory === 'Sci-Fi') {
+        base = base.filter(m => m.genre.some(g => g.toLowerCase().includes('sci-fi') || g.toLowerCase().includes('fantasy')));
+      } else if (activeCategory === 'Award Winners') {
+        base = base.filter(m => m.tagline?.toLowerCase().includes('nominated') || m.tagline?.toLowerCase().includes('won') || parseFloat(m.rating) > 8.0);
+      }
+
+      setFilteredMovies(base);
+    };
+
+    filterContent();
+
+    // Listen for watchlist updates from MovieCard
+    const handleWatchlistUpdate = () => filterContent();
+    window.addEventListener('watchlistUpdated', handleWatchlistUpdate);
+    return () => window.removeEventListener('watchlistUpdated', handleWatchlistUpdate);
+    
+  }, [activeTab, activeCategory, movies]);
 
   // Loading State
   if (loading) {
@@ -61,15 +89,15 @@ const App: React.FC = () => {
     setCurrentPlayerMovie(movie);
   };
 
-  const categories = ['Recommended', 'Trending', 'New Releases', 'Sci-Fi', 'Award Winners'];
+  const categories = ['Recommended', 'Trending', 'My List', 'New Releases', 'Sci-Fi', 'Award Winners'];
 
   return (
     <div className="min-h-screen bg-[#e5e5e5] text-white font-sans selection:bg-yellow-500 selection:text-black">
       <Navigation 
         onSearchClick={() => setIsSearchOpen(true)} 
-        onHomeClick={() => setActiveTab('HOME')}
-        onMoviesClick={() => setActiveTab('MOVIES')}
-        onSeriesClick={() => setActiveTab('SERIES')}
+        onHomeClick={() => { setActiveTab('HOME'); setActiveCategory('Recommended'); }}
+        onMoviesClick={() => { setActiveTab('MOVIES'); setActiveCategory('Recommended'); }}
+        onSeriesClick={() => { setActiveTab('SERIES'); setActiveCategory('Recommended'); }}
         onCollectionsClick={() => setActiveTab('COLLECTIONS')}
         activeTab={activeTab}
       />
@@ -123,6 +151,7 @@ const App: React.FC = () => {
                                             : 'text-zinc-400 border-zinc-800 bg-zinc-900/50 hover:border-zinc-600 hover:text-white'
                                         }`}
                                     >
+                                        {cat === 'My List' && <span className="absolute -top-1 -right-1 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span></span>}
                                         {cat}
                                     </button>
                                 ))}
@@ -137,14 +166,26 @@ const App: React.FC = () => {
                             <AnimatePresence mode='popLayout'>
                                 {filteredMovies.length > 0 ? filteredMovies.map((movie, index) => (
                                 <MovieCard 
-                                    key={`${movie.id}`} 
+                                    key={`${movie.id}-${activeCategory}`} 
                                     movie={movie} 
                                     index={index} 
                                     onSelect={handleMovieSelect}
                                 />
                                 )) : (
-                                    <div className="col-span-full text-center py-20 text-zinc-600">
-                                        No titles found in this category.
+                                    <div className="col-span-full text-center py-20">
+                                        <p className="text-zinc-600 text-lg font-serif italic mb-4">
+                                          {activeCategory === 'My List' 
+                                            ? "Your cinematic vault is empty. Add titles to get started." 
+                                            : "No titles found in this category."}
+                                        </p>
+                                        {activeCategory === 'My List' && (
+                                          <button 
+                                            onClick={() => setActiveCategory('Recommended')}
+                                            className="px-6 py-2 border border-zinc-800 rounded-full text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors"
+                                          >
+                                            Explore Library
+                                          </button>
+                                        )}
                                     </div>
                                 )}
                             </AnimatePresence>

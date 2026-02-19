@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, ArrowRight, ArrowLeft, Star } from 'lucide-react';
 import { Movie } from '../types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 interface HeroProps {
   movies: Movie[];
@@ -47,7 +47,8 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
     : movie.synopsis;
 
   // Animation Variants
-  const slideVariants = {
+  // Fixed: Added explicit Variants type and used 'as const' for easing to prevent type mismatch
+  const slideVariants: Variants = {
     enter: (direction: number) => ({
       opacity: 0,
       scale: 1.1,
@@ -58,7 +59,7 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
       scale: 1,
       transition: {
         opacity: { duration: 0.8 },
-        scale: { duration: 1.2, ease: "easeOut" }
+        scale: { duration: 1.2, ease: "easeOut" as const }
       }
     },
     exit: (direction: number) => ({

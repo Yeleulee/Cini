@@ -1,20 +1,11 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
-const getAiClient = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    console.warn("API_KEY is not set in environment variables.");
-    return null;
-  }
-  return new GoogleGenAI({ apiKey });
-};
-
 export const generateMovieRecommendation = async (
   userQuery: string, 
   currentContext: string
 ): Promise<string> => {
-  const ai = getAiClient();
-  if (!ai) return "AI Service Unavailable (Missing Key)";
+  // Always initialize right before making an API call using the mandatory named parameter.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   try {
     const model = "gemini-3-flash-preview";
@@ -27,11 +18,13 @@ export const generateMovieRecommendation = async (
       Focus on mood, cinematography, and "vibe".
     `;
 
+    // Always use ai.models.generateContent to query GenAI with model and prompt.
     const response: GenerateContentResponse = await ai.models.generateContent({
       model,
       contents: prompt,
     });
 
+    // Directly access the .text property from the response.
     return response.text || "I couldn't generate a recommendation at this moment.";
   } catch (error) {
     console.error("Gemini API Error:", error);
@@ -40,8 +33,7 @@ export const generateMovieRecommendation = async (
 };
 
 export const getSmartSynopsis = async (movieTitle: string): Promise<string> => {
-  const ai = getAiClient();
-  if (!ai) return "Synopsis unavailable.";
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   try {
      const model = "gemini-3-flash-preview";

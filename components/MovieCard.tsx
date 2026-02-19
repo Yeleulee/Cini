@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Star, Plus, Check } from 'lucide-react';
 import { Movie } from '../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MovieCardProps {
   movie: Movie;
@@ -10,36 +10,39 @@ interface MovieCardProps {
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect, index }) => {
-  const [inWatchlist, setInWatchlist] = useState(() => {
-    try {
-      const watchlist = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
-      return watchlist.some((m: Movie) => m.id === movie.id);
-    } catch (e) {
-      return false;
-    }
-  });
+  const [inWatchlist, setInWatchlist] = useState(false);
 
+  // Initialize watchlist state from localStorage
   useEffect(() => {
     try {
       const watchlist = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
       const exists = watchlist.some((m: Movie) => m.id === movie.id);
       setInWatchlist(exists);
-    } catch (e) {}
+    } catch (e) {
+      console.error("Failed to read watchlist", e);
+    }
   }, [movie.id]);
 
   const handleToggleWatchlist = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent opening the player when clicking the plus button
     try {
       const watchlist = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
       let newWatchlist;
+      
       if (inWatchlist) {
         newWatchlist = watchlist.filter((m: Movie) => m.id !== movie.id);
       } else {
         newWatchlist = [...watchlist, movie];
       }
+      
       localStorage.setItem('cineflow_watchlist', JSON.stringify(newWatchlist));
       setInWatchlist(!inWatchlist);
-    } catch (e) {}
+      
+      // Dispatch a custom event to notify App.tsx if it needs to re-filter
+      window.dispatchEvent(new Event('watchlistUpdated'));
+    } catch (e) {
+      console.error("Failed to update watchlist", e);
+    }
   };
 
   return (
@@ -95,9 +98,34 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect, index }) 
             </button>
              <button 
                 onClick={handleToggleWatchlist}
-                className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all ${inWatchlist ? 'bg-zinc-800 border-zinc-700 text-yellow-500' : 'bg-transparent border-white/30 text-white hover:bg-white/10'}`}
+                className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-300 ${
+                  inWatchlist 
+                    ? 'bg-yellow-500 border-yellow-500 text-black' 
+                    : 'bg-black/40 border-white/20 text-white hover:bg-white/10'
+                }`}
+                title={inWatchlist ? "Remove from List" : "Add to My List"}
              >
-                {inWatchlist ? <Check size={14} /> : <Plus size={16} />}
+                <AnimatePresence mode="wait">
+                  {inWatchlist ? (
+                    <motion.div
+                      key="check"
+                      initial={{ scale: 0.5, rotate: -45 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      exit={{ scale: 0.5, rotate: 45 }}
+                    >
+                      <Check size={16} strokeWidth={3} />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="plus"
+                      initial={{ scale: 0.5, rotate: 45 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      exit={{ scale: 0.5, rotate: -45 }}
+                    >
+                      <Plus size={18} strokeWidth={2.5} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
             </button>
         </div>
       </div>
