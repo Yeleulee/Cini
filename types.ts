@@ -34,16 +34,16 @@ export interface Movie {
   director: string;
   matchScore: number; // Mock "Match" percentage
   primaryColor: string; // Hex for the "Adaptive Art Engine"
-  
+
   // New Fields for Series/Movies Update
   type: MediaType;
   seasons?: Season[];
   downloadOptions?: string[]; // e.g. ['4K', '1080p', '720p']
-  
+
   // Slider Specifics
   criticReview?: {
-      text: string;
-      author: string;
+    text: string;
+    author: string;
   };
   platformLogo?: string; // URL or name of platform (Netflix, HBO, etc)
 }
@@ -60,11 +60,6 @@ export interface Collection {
   heroCharacterUrl?: string; // For the layered effect
 }
 
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'model';
-  text: string;
-  timestamp: number;
-}
+
 
 export type ViewState = 'HOME' | 'PLAYER' | 'SEARCH';
