@@ -1,4 +1,4 @@
-import { Movie, Season, Collection } from '../types';
+﻿import { Movie, Season, Collection } from '../types';
 
 const API_KEY = '4ba2f2d6';
 const BASE_URL = 'https://www.omdbapi.com/';
@@ -48,7 +48,7 @@ const FALLBACK_MOVIES: Movie[] = [
         posterUrl: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=60&w=600&auto=format&fit=crop',
         backdropUrl: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=60&w=600&auto=format&fit=crop',
         heroUrl: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=60&w=600&auto=format&fit=crop',
-        tagline: 'VENGEANCE', cast: ['Robert Pattinson', 'Zoë Kravitz'], director: 'Matt Reeves',
+        tagline: 'VENGEANCE', cast: ['Robert Pattinson', 'Zo├½ Kravitz'], director: 'Matt Reeves',
         matchScore: 85, primaryColor: '#1a1a1a', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
         criticReview: { text: 'A brooding, visually stunning detective thriller.', author: "Critic's Choice" },
         platformLogo: 'OMDb STREAM'
@@ -60,7 +60,7 @@ const FALLBACK_MOVIES: Movie[] = [
         posterUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=60&w=600&auto=format&fit=crop',
         backdropUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=60&w=600&auto=format&fit=crop',
         heroUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=60&w=600&auto=format&fit=crop',
-        tagline: 'BEGIN THE JOURNEY', cast: ['Timothée Chalamet', 'Zendaya'], director: 'Denis Villeneuve',
+        tagline: 'BEGIN THE JOURNEY', cast: ['Timoth├⌐e Chalamet', 'Zendaya'], director: 'Denis Villeneuve',
         matchScore: 90, primaryColor: '#1a1a1a', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
         criticReview: { text: 'A visually spectacular epic.', author: "Critic's Choice" },
         platformLogo: 'OMDb STREAM'
@@ -295,7 +295,7 @@ export const getFeaturedContent = async (
     // Return fallback immediately so the UI renders without waiting for the network
     const snapshot = [...FALLBACK_MOVIES];
 
-    // Kick off background hydration — don't await this
+    // Kick off background hydration ΓÇö don't await this
     (async () => {
         try {
             let hydrated = [...snapshot];

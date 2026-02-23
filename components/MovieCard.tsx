@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Star, Plus, Check } from 'lucide-react';
 import { Movie } from '../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MovieCardProps {
   movie: Movie;
@@ -10,38 +10,30 @@ interface MovieCardProps {
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect, index }) => {
-  const [inWatchlist, setInWatchlist] = useState(() => {
-    try {
-      const watchlist = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
-      return watchlist.some((m: Movie) => m.id === movie.id);
-    } catch (e) {
-      return false;
-    }
-  });
+  const [inWatchlist, setInWatchlist] = useState(false);
 
+  // Initialize watchlist state from localStorage
   useEffect(() => {
     try {
       const watchlist = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
-      const exists = watchlist.some((m: Movie) => m.id === movie.id);
-      setInWatchlist(exists);
-    } catch (e) { }
+      setInWatchlist(watchlist.some((m: Movie) => m.id === movie.id));
+    } catch { /* silent */ }
   }, [movie.id]);
 
   const handleToggleWatchlist = (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       const watchlist = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
-      let newWatchlist;
-      if (inWatchlist) {
-        newWatchlist = watchlist.filter((m: Movie) => m.id !== movie.id);
-      } else {
-        newWatchlist = [...watchlist, movie];
-      }
+      const newWatchlist = inWatchlist
+        ? watchlist.filter((m: Movie) => m.id !== movie.id)
+        : [...watchlist, movie];
+
       localStorage.setItem('cineflow_watchlist', JSON.stringify(newWatchlist));
-      // Notify CollectionsView.MyList to refresh
+      // Notify CollectionsView (storage event) + App.tsx filter (custom event)
       window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('watchlistUpdated'));
       setInWatchlist(!inWatchlist);
-    } catch (e) { }
+    } catch { /* silent */ }
   };
 
   return (
@@ -64,7 +56,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect, index }) 
         className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-110"
       />
 
-      {/* Gradient Overlay - Always subtle at bottom, grows on hover */}
+      {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300" />
 
       {/* Content Container */}
@@ -90,16 +82,40 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect, index }) 
           </p>
         </div>
 
-        {/* Interactive Buttons - Slide up on hover */}
+        {/* Interactive Buttons */}
         <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-75">
           <button className="flex-1 bg-white text-black h-9 rounded-lg font-bold text-xs flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors shadow-lg shadow-white/10">
             <Play size={12} fill="currentColor" /> WATCH NOW
           </button>
           <button
             onClick={handleToggleWatchlist}
-            className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all ${inWatchlist ? 'bg-zinc-800 border-zinc-700 text-yellow-500' : 'bg-transparent border-white/30 text-white hover:bg-white/10'}`}
+            title={inWatchlist ? 'Remove from List' : 'Add to My List'}
+            className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-300 ${inWatchlist
+                ? 'bg-yellow-500 border-yellow-500 text-black'
+                : 'bg-black/40 border-white/20 text-white hover:bg-white/10'
+              }`}
           >
-            {inWatchlist ? <Check size={14} /> : <Plus size={16} />}
+            <AnimatePresence mode="wait">
+              {inWatchlist ? (
+                <motion.div
+                  key="check"
+                  initial={{ scale: 0.5, rotate: -45 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  exit={{ scale: 0.5, rotate: 45 }}
+                >
+                  <Check size={16} strokeWidth={3} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="plus"
+                  initial={{ scale: 0.5, rotate: 45 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  exit={{ scale: 0.5, rotate: -45 }}
+                >
+                  <Plus size={18} strokeWidth={2.5} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </button>
         </div>
       </div>

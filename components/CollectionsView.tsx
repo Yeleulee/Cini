@@ -22,6 +22,7 @@ function readWatchlist(): Movie[] {
 function persistWatchlist(list: Movie[]) {
     localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
     window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('watchlistUpdated'));
 }
 
 type FilterType = 'all' | 'movie' | 'series';
@@ -199,8 +200,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onSelectMovie 
                                         src={movie.posterUrl}
                                         alt={movie.title}
                                         loading="lazy"
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
-                                        style={{ transform: 'scale(1)' }}
+                                        className="w-full h-full object-cover transition-transform duration-500"
                                         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
                                         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
                                     />
@@ -239,10 +239,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onSelectMovie 
                                             <span>{movie.rating}</span>
                                         </div>
 
-                                        {/* Watch button — shows on hover */}
-                                        <button
-                                            className="w-full bg-white text-black rounded-xl py-2 text-[10px] font-bold flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75 hover:bg-yellow-400"
-                                        >
+                                        {/* Watch button */}
+                                        <button className="w-full bg-white text-black rounded-xl py-2 text-[10px] font-bold flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75 hover:bg-yellow-400">
                                             <PlayCircle size={12} />
                                             Watch Now
                                         </button>
