@@ -52,7 +52,7 @@ const GenreSection: React.FC<GenreSectionProps> = ({ allMovies, onSelectMovie })
         <div className="w-1 h-8 rounded-full bg-yellow-500" />
         <div>
           <p className="text-zinc-500 text-[10px] font-bold tracking-[0.25em] uppercase">Explore by</p>
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-none">Genre</h2>
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white leading-none">Genre</h2>
         </div>
       </div>
 
@@ -250,18 +250,18 @@ const App: React.FC = () => {
         ) : (
           <>
             {/* ── Hero Slider ── */}
-            <div className="fixed top-0 left-0 right-0 z-0">
+            <div className="sticky top-0 w-full z-0">
               <Hero
-                movies={movies.slice(0, 8)}
+                movies={movies.slice(0, 12)}
                 onPlay={setCurrentPlayerMovie}
               />
             </div>
 
             {/* ── Content Sheet ── */}
-            <div className="relative z-20 mt-[85vh] bg-[#09090b] rounded-t-[3rem] shadow-[0_-25px_50px_rgba(0,0,0,0.8)] border-t border-white/5 min-h-screen pb-24">
+            <div className="relative z-20 bg-[#09090b] rounded-t-[3rem] shadow-[0_-25px_50px_rgba(0,0,0,0.8)] border-t border-white/5 min-h-screen pb-24">
 
               {/* Fade edge */}
-              <div className="absolute left-0 right-0 -top-16 h-16 bg-gradient-to-t from-[#09090b] to-transparent pointer-events-none" />
+              <div className="absolute left-0 right-0 -top-24 h-24 bg-gradient-to-t from-[#09090b] to-transparent pointer-events-none" />
 
               <div className="px-6 md:px-12 pt-16">
 
@@ -281,7 +281,7 @@ const App: React.FC = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.08 }}
-                      className="text-4xl md:text-6xl font-medium tracking-tighter text-white"
+                      className="text-3xl md:text-4xl font-medium tracking-tighter text-white"
                     >
                       {activeCategory === 'New Releases' ? 'New Releases' : sectionTitle}
                     </motion.h2>

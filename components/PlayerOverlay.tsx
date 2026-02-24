@@ -301,21 +301,11 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
 
             {/* ── Header (always visible on info screen; hides in player) ── */}
             <div
-                className={`fixed top-0 left-0 right-0 p-4 md:p-8 flex justify-between items-center z-[70] transition-all duration-500 ${isPlaying && !showControls ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
+                className={`fixed top-0 left-0 right-0 p-4 md:p-8 flex justify-between items-center z-[70] transition-opacity duration-300 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
                     }`}
             >
                 <div className="flex items-center gap-3">
-                    {isPlaying ? (
-                        <button
-                            onClick={() => { setIsPlaying(false); setShowEpisodePanel(false); }}
-                            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors bg-black/50 backdrop-blur-md px-4 py-2 rounded-full"
-                        >
-                            <ArrowLeft size={18} />
-                            <span className="text-xs font-bold tracking-widest uppercase">Back</span>
-                        </button>
-                    ) : (
-                        <div className="w-9 h-9 rounded-full bg-yellow-500 flex items-center justify-center font-bold text-black font-serif-display text-sm">C</div>
-                    )}
+                    <div className="w-9 h-9 rounded-full bg-yellow-500 flex items-center justify-center font-bold text-black font-serif-display text-sm">C</div>
                 </div>
                 <button
                     onClick={onClose}
@@ -326,93 +316,133 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
             </div>
 
             {/* ── INFO SCREEN (before playback starts) ── */}
-            <div className={`relative z-40 min-h-screen flex flex-col pt-24 pb-28 px-5 md:px-14 max-w-[1800px] mx-auto transition-opacity duration-500 ${isPlaying ? 'opacity-0 pointer-events-none absolute' : 'opacity-100'}`}>
+            <div className={`relative z-40 min-h-screen flex flex-col transition-opacity duration-500 ${isPlaying ? 'opacity-0 pointer-events-none absolute' : 'opacity-100'}`}>
 
-                {/* Top pill metadata */}
-                <div className="inline-flex flex-wrap items-center gap-3 p-2 pr-5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6 w-fit">
-                    <span className="px-3 py-1 bg-yellow-500 text-black rounded-full text-[10px] font-bold tracking-widest uppercase">{movie.quality}</span>
-                    <span className="text-xs font-bold text-zinc-300 flex items-center gap-1"><Star size={11} className="text-yellow-500 fill-yellow-500" /> {movie.rating}</span>
-                    <span className="w-1 h-1 rounded-full bg-zinc-600" />
-                    <span className="text-xs font-bold text-zinc-300">{movie.year}</span>
-                    {isSeries && <span className="text-xs font-bold text-zinc-400">{movie.seasons?.length ?? 1} Season{(movie.seasons?.length ?? 1) > 1 ? 's' : ''}</span>}
+                {/* ── MOBILE HERO POSTER (visible only below lg) ── */}
+                <div className="relative lg:hidden w-full h-64 sm:h-80 overflow-hidden flex-shrink-0">
+                    {/* Blurred backdrop */}
+                    <img
+                        src={movie.backdropUrl || movie.posterUrl}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover scale-110 blur-sm opacity-40"
+                        aria-hidden="true"
+                    />
+                    {/* Dark gradient overlay bottom */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/60 to-transparent" />
+                    {/* Dark gradient overlay top (for nav bar readability) */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#09090b]/60 to-transparent h-24" />
+
+                    {/* Floating centered poster card */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.92 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                            className="relative w-48 sm:w-64 aspect-video rounded-xl overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.8)] border border-white/10"
+                        >
+                            <img
+                                src={movie.backdropUrl || movie.posterUrl}
+                                alt={movie.title}
+                                className="w-full h-full object-cover"
+                            />
+                            {/* Quality badge */}
+                            <div className="absolute top-2 left-2">
+                                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-yellow-500 text-black">
+                                    {movie.quality}
+                                </span>
+                            </div>
+                        </motion.div>
+                    </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row items-start gap-10 lg:gap-16">
+                {/* ── CONTENT AREA ── */}
+                <div className="flex-1 px-5 md:px-14 pb-28 max-w-[1800px] mx-auto w-full pt-4 lg:pt-24">
 
-                    {/* Left: title, synopsis, CTA */}
-                    <div className="flex-1 max-w-2xl">
-                        <h1 className="text-5xl md:text-8xl font-serif-display font-black tracking-tighter leading-[0.85] mb-4 text-white mix-blend-overlay">
-                            {movie.title}
-                        </h1>
-                        {movie.tagline && (
-                            <p className="text-lg md:text-2xl text-zinc-400 font-light tracking-[0.15em] uppercase mb-6 pl-3 border-l-4 border-yellow-500">
-                                {movie.tagline}
-                            </p>
-                        )}
-                        <p className="text-zinc-300 text-base leading-relaxed max-w-xl mb-8 font-light">{movie.synopsis}</p>
-
-                        {/* Actions row: Play + Save */}
-                        <div className="flex items-center gap-4 mb-10">
-                            {/* Play button */}
-                            <button
-                                onClick={handlePlay}
-                                className="group relative w-20 h-20 md:w-28 md:h-28 rounded-full flex items-center justify-center bg-white hover:scale-105 transition-transform duration-500 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
-                            >
-                                <div className="absolute inset-0 bg-yellow-500 rounded-full scale-0 group-hover:scale-100 transition-transform duration-400" />
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-black ml-1.5 relative z-10">
-                                    <path d="M5 3l14 9-14 9V3z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                            </button>
-
-                            {/* Save to My List */}
-                            <button
-                                onClick={handleToggleWatchlist}
-                                className={`flex items-center gap-2 px-5 py-3 rounded-full border font-bold text-sm transition-all duration-300 ${inWatchlist
-                                    ? 'bg-yellow-500/10 border-yellow-500/60 text-yellow-400 hover:bg-red-500/10 hover:border-red-400/60 hover:text-red-400'
-                                    : 'bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/40'
-                                    }`}
-                            >
-                                {inWatchlist
-                                    ? <><BookmarkCheck size={16} /> Saved</>
-                                    : <><Bookmark size={16} /> Save to My List</>
-                                }
-                            </button>
-                        </div>
-
-                        {/* ── EPISODE SELECTOR (info screen) ── */}
-                        {hasSeasonsData && selectedSeason && (
-                            <div className="mt-2">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Episodes</h3>
-                                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
-                                        {selectedSeason.episodes.length} Episodes
-                                    </span>
-                                </div>
-                                <EpisodePanel
-                                    movie={movie}
-                                    selectedSeason={selectedSeason}
-                                    currentEpisodeIndex={currentEpisodeIndex}
-                                    onSeasonChange={handleSeasonChange}
-                                    onEpisodeSelect={handleEpisodeSelect}
-                                />
-                            </div>
-                        )}
+                    {/* Top pill metadata */}
+                    <div className="inline-flex flex-wrap items-center gap-3 p-2 pr-5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-5 w-fit">
+                        <span className="px-3 py-1 bg-yellow-500 text-black rounded-full text-[10px] font-bold tracking-widest uppercase">{movie.quality}</span>
+                        <span className="text-xs font-bold text-zinc-300 flex items-center gap-1"><Star size={11} className="text-yellow-500 fill-yellow-500" /> {movie.rating}</span>
+                        <span className="w-1 h-1 rounded-full bg-zinc-600" />
+                        <span className="text-xs font-bold text-zinc-300">{movie.year}</span>
+                        {isSeries && <span className="text-xs font-bold text-zinc-400">{movie.seasons?.length ?? 1} Season{(movie.seasons?.length ?? 1) > 1 ? 's' : ''}</span>}
                     </div>
 
-                    {/* Right: artwork */}
-                    <div className="hidden lg:flex flex-1 h-[70vh] items-center justify-center pointer-events-none">
-                        <motion.img
-                            initial={{ opacity: 0, x: 60 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                            src={movie.heroUrl || movie.posterUrl}
-                            alt={movie.title}
-                            className="w-full h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
-                        />
+                    <div className="flex flex-col lg:flex-row items-start gap-10 lg:gap-16">
+
+                        {/* Left: title, synopsis, CTA */}
+                        <div className="flex-1 max-w-2xl">
+                            <h1 className="text-3xl md:text-5xl font-serif-display font-black tracking-tighter leading-tight mb-3 text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]">
+                                {movie.title}
+                            </h1>
+                            {movie.tagline && (
+                                <p className="text-xs md:text-sm text-zinc-400 font-medium tracking-[0.15em] uppercase mb-5 pl-3 border-l-2 border-yellow-500">
+                                    {movie.tagline}
+                                </p>
+                            )}
+                            <p className="text-zinc-400 text-sm leading-relaxed max-w-xl mb-8 font-light">{movie.synopsis}</p>
+
+                            {/* Actions row: Play + Save */}
+                            <div className="flex items-center gap-4 mb-10">
+                                {/* Play button */}
+                                <button
+                                    onClick={handlePlay}
+                                    className="group relative w-20 h-20 md:w-28 md:h-28 rounded-full flex items-center justify-center bg-white hover:scale-105 transition-transform duration-500 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
+                                >
+                                    <div className="absolute inset-0 bg-yellow-500 rounded-full scale-0 group-hover:scale-100 transition-transform duration-400" />
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-black ml-1.5 relative z-10">
+                                        <path d="M5 3l14 9-14 9V3z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+
+                                {/* Save to My List */}
+                                <button
+                                    onClick={handleToggleWatchlist}
+                                    className={`flex items-center gap-2 px-5 py-3 rounded-full border font-bold text-sm transition-all duration-300 ${inWatchlist
+                                        ? 'bg-yellow-500/10 border-yellow-500/60 text-yellow-400 hover:bg-red-500/10 hover:border-red-400/60 hover:text-red-400'
+                                        : 'bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/40'
+                                        }`}
+                                >
+                                    {inWatchlist
+                                        ? <><BookmarkCheck size={16} /> Saved</>
+                                        : <><Bookmark size={16} /> Save to My List</>
+                                    }
+                                </button>
+                            </div>
+
+                            {/* ── EPISODE SELECTOR (info screen) ── */}
+                            {hasSeasonsData && selectedSeason && (
+                                <div className="mt-2">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Episodes</h3>
+                                        <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                                            {selectedSeason.episodes.length} Episodes
+                                        </span>
+                                    </div>
+                                    <EpisodePanel
+                                        movie={movie}
+                                        selectedSeason={selectedSeason}
+                                        currentEpisodeIndex={currentEpisodeIndex}
+                                        onSeasonChange={handleSeasonChange}
+                                        onEpisodeSelect={handleEpisodeSelect}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right: artwork — desktop only */}
+                        <div className="hidden lg:flex flex-1 h-[70vh] items-center justify-center pointer-events-none">
+                            <motion.img
+                                initial={{ opacity: 0, x: 60 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                                src={movie.heroUrl || movie.posterUrl}
+                                alt={movie.title}
+                                className="w-full h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
-
             {/* ── ACTIVE PLAYER ── */}
             <AnimatePresence>
                 {isPlaying && (
@@ -477,6 +507,13 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                                                 </button>
                                             ))}
                                         </div>
+
+                                        <button
+                                            onClick={onClose}
+                                            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-300 hover:text-white transition-all ml-1"
+                                        >
+                                            <X size={18} />
+                                        </button>
                                     </div>
                                 </div>
                             </div>

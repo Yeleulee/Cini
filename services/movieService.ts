@@ -5,14 +5,30 @@ const BASE_URL = 'https://www.omdbapi.com/';
 
 // --- ID Lists for Curated Experience ---
 const FEATURED_IDS = [
-    'tt1877830', // The Batman
-    'tt1160419', // Dune
-    'tt12566356', // Cyberpunk: Edgerunners
-    'tt0816692', // Interstellar
-    'tt5180504', // The Witcher
-    'tt9362722', // Spider-Man: Across the Spider-Verse
-    'tt11126994', // Arcane
-    'tt1856101', // Blade Runner 2049
+    // Classic Blockbusters
+    'tt1877830', // The Batman (2022)
+    'tt1160419', // Dune (2021)
+    'tt12566356', // Cyberpunk: Edgerunners (2022)
+    'tt0816692', // Interstellar (2014)
+    'tt5180504', // The Witcher (2019)
+    'tt9362722', // Spider-Man: Across the Spider-Verse (2023)
+    'tt11126994', // Arcane (2021)
+    'tt1856101', // Blade Runner 2049 (2017)
+    // New & Recent Releases
+    'tt15398776', // Oppenheimer (2023)
+    'tt1517268',  // Barbie (2023)
+    'tt11813216', // The Creator (2023)
+    'tt16366836', // Aquaman and the Lost Kingdom (2023)
+    'tt21807272', // Rebel Moon (2023)
+    'tt13654520', // Godzilla x Kong: The New Empire (2024)
+    'tt12037194', // Furiosa (2024)
+    'tt14208870', // Kingdom of the Planet of the Apes (2024)
+    'tt10545296', // Deadpool & Wolverine (2024)
+    'tt22687790', // Alien: Romulus (2024)
+    'tt1630029',  // Avatar: The Way of Water (2022)
+    'tt18412256', // Dune: Part Two (2024)
+    'tt21692408', // Inside Out 2 (2024)
+    'tt9114286',  // Black Panther: Wakanda Forever (2022)
 ];
 
 // --- In-Memory Cache to avoid redundant API calls ---
@@ -38,9 +54,19 @@ const makeSeason = (
     }))
 });
 
+// --- Shuffle helper (Fisher-Yates) ---
+function shuffleArray<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
 // --- Instant Fallback Catalogue (renders before API responds) ---
 // Uses small, fast-loading Unsplash images optimised for mobile (w=600).
-const FALLBACK_MOVIES: Movie[] = [
+const FALLBACK_MOVIES_RAW: Movie[] = [
     {
         id: 'tt1877830', title: 'The Batman', year: 2022, duration: '176 min',
         genre: ['Action', 'Crime', 'Drama'], rating: '7.8', quality: '4K',
@@ -166,7 +192,95 @@ const FALLBACK_MOVIES: Movie[] = [
         criticReview: { text: 'A breathtaking sequel to a sci-fi classic.', author: "Critic's Choice" },
         platformLogo: 'OMDb STREAM'
     },
+    // ── New 2023-2025 fallback entries ──────────────────────────────────────
+    {
+        id: 'tt15398776', title: 'Oppenheimer', year: 2023, duration: '180 min',
+        genre: ['Biography', 'Drama', 'History'], rating: '8.9', quality: '4K',
+        synopsis: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.',
+        posterUrl: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?q=60&w=600&auto=format&fit=crop',
+        backdropUrl: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?q=60&w=600&auto=format&fit=crop',
+        heroUrl: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?q=60&w=600&auto=format&fit=crop',
+        tagline: 'THE WORLD FOREVER CHANGES', cast: ['Cillian Murphy', 'Emily Blunt'], director: 'Christopher Nolan',
+        matchScore: 92, primaryColor: '#1a1a1a', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'A monumental cinematic achievement.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
+    {
+        id: 'tt18412256', title: 'Dune: Part Two', year: 2024, duration: '167 min',
+        genre: ['Action', 'Adventure', 'Drama'], rating: '8.6', quality: '4K',
+        synopsis: 'Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family.',
+        posterUrl: 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?q=60&w=600&auto=format&fit=crop',
+        backdropUrl: 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?q=60&w=600&auto=format&fit=crop',
+        heroUrl: 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?q=60&w=600&auto=format&fit=crop',
+        tagline: 'LONG LIVE THE FIGHTERS', cast: ['Timothée Chalamet', 'Zendaya'], director: 'Denis Villeneuve',
+        matchScore: 94, primaryColor: '#1a1a1a', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'An unmissable sci-fi epic.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
+    {
+        id: 'tt10545296', title: 'Deadpool & Wolverine', year: 2024, duration: '128 min',
+        genre: ['Action', 'Comedy', 'Superhero'], rating: '7.8', quality: '4K',
+        synopsis: "Deadpool is offered a place in the Marvel Cinematic Universe by the Time Variance Authority, but instead recruits a variant of Wolverine.",
+        posterUrl: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?q=60&w=600&auto=format&fit=crop',
+        backdropUrl: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?q=60&w=600&auto=format&fit=crop',
+        heroUrl: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?q=60&w=600&auto=format&fit=crop',
+        tagline: 'SAVE THE UNIVERSE', cast: ['Ryan Reynolds', 'Hugh Jackman'], director: 'Shawn Levy',
+        matchScore: 88, primaryColor: '#1a1a1a', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'A wildly entertaining superhero romp.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
+    {
+        id: 'tt12037194', title: 'Furiosa: A Mad Max Saga', year: 2024, duration: '148 min',
+        genre: ['Action', 'Adventure', 'Sci-Fi'], rating: '7.8', quality: '4K',
+        synopsis: 'The origin story of renegade warrior Furiosa before she teamed up with Mad Max.',
+        posterUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=60&w=600&auto=format&fit=crop',
+        backdropUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=60&w=600&auto=format&fit=crop',
+        heroUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=60&w=600&auto=format&fit=crop',
+        tagline: 'WITNESS HER', cast: ['Anya Taylor-Joy', 'Chris Hemsworth'], director: 'George Miller',
+        matchScore: 86, primaryColor: '#1a1a1a', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'A thunderous, visually stunning action epic.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
+    {
+        id: 'tt13654520', title: 'Godzilla x Kong: The New Empire', year: 2024, duration: '115 min',
+        genre: ['Action', 'Adventure', 'Sci-Fi'], rating: '6.3', quality: '4K',
+        synopsis: 'Two ancient titans, Godzilla and Kong, clash in an epic battle as humans unravel their intertwined origins.',
+        posterUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=60&w=600&auto=format&fit=crop',
+        backdropUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=60&w=600&auto=format&fit=crop',
+        heroUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=60&w=600&auto=format&fit=crop',
+        tagline: 'ONE WILL FALL', cast: ['Rebecca Hall', 'Brian Tyree Henry'], director: 'Adam Wingard',
+        matchScore: 75, primaryColor: '#1a1a1a', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'Monster mayhem at its most spectacular.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
+    {
+        id: 'tt14208870', title: 'Kingdom of the Planet of the Apes', year: 2024, duration: '145 min',
+        genre: ['Action', 'Adventure', 'Sci-Fi'], rating: '7.0', quality: '4K',
+        synopsis: 'Many years after the reign of Caesar, a young ape goes on a journey that will lead him to question everything.',
+        posterUrl: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=60&w=600&auto=format&fit=crop',
+        backdropUrl: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=60&w=600&auto=format&fit=crop',
+        heroUrl: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=60&w=600&auto=format&fit=crop',
+        tagline: 'A NEW KINGDOM RISES', cast: ['Owen Teague', 'Freya Allan'], director: 'Wes Ball',
+        matchScore: 80, primaryColor: '#1a1a1a', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'A bold new chapter in an iconic franchise.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
+    {
+        id: 'tt22687790', title: 'Alien: Romulus', year: 2024, duration: '119 min',
+        genre: ['Horror', 'Sci-Fi', 'Thriller'], rating: '7.4', quality: '4K',
+        synopsis: 'While scavenging the deep ends of a derelict space station, a group of young space colonizers come face to face with the most terrifying life form in the universe.',
+        posterUrl: 'https://images.unsplash.com/photo-1590840069597-5f9065fc0b35?q=60&w=600&auto=format&fit=crop',
+        backdropUrl: 'https://images.unsplash.com/photo-1590840069597-5f9065fc0b35?q=60&w=600&auto=format&fit=crop',
+        heroUrl: 'https://images.unsplash.com/photo-1590840069597-5f9065fc0b35?q=60&w=600&auto=format&fit=crop',
+        tagline: 'NO ONE CAN HEAR YOU SCREAM', cast: ['Cailee Spaeny', 'David Jonsson'], director: 'Fede Alvarez',
+        matchScore: 83, primaryColor: '#1a1a1a', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'A terrifying return to deep space horror.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
 ];
+
+// Shuffle on each page load so banner always shows something different
+const FALLBACK_MOVIES: Movie[] = shuffleArray(FALLBACK_MOVIES_RAW);
 // Populate cache with fallback data immediately
 FALLBACK_MOVIES.forEach(m => _cache.set(m.id, m));
 
