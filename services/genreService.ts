@@ -128,12 +128,45 @@ export const GENRES: Genre[] = [
 // ── cache so we don't re-fetch already loaded genre movies ──────────────────
 const _genreCache = new Map<string, Movie[]>();
 
-const API_KEY = '4ba2f2d6';
+// --- API Key Rotation (same pool as movieService) ---
+const API_KEYS = ['4ba2f2d6', 'f6bca86f'];
+let _gKeyIndex = 0;
+const getApiKey = () => {
+    const key = API_KEYS[_gKeyIndex % API_KEYS.length];
+    _gKeyIndex++;
+    return key;
+};
 const BASE_URL = 'https://www.omdbapi.com/';
 
-function getHighResPoster(url: string) {
-    if (!url || url === 'N/A')
-        return 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=600&auto=format&fit=crop';
+// TMDB image base — no API key required for direct image paths
+const TMDB_IMG = 'https://image.tmdb.org/t/p';
+
+// Known TMDB backdrop paths for curated IDs, so genre cards look cinematic
+const TMDB_BACKDROPS: Record<string, string> = {
+    'tt4154796': '/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg',  // Avengers: Endgame
+    'tt3501632': '/x4WJ0FXJV6IISC2kIqe3QHX7VsP.jpg',  // Thor: Ragnarok
+    'tt0133093': '/fNG7i7RqMErkcqhohV2a6cV1Ehy.jpg',  // The Matrix
+    'tt0910970': '/hbhFnRzzg6ZDmm8YAmxBnQ3vXfH.jpg',  // WALL-E
+    'tt0111161': '/kXfqcdQKsToO0OUXHcrrNCHDBzO.jpg',  // The Shawshank Redemption
+    'tt0068646': '/tmU7GeKVybMWFButWEGl2M4GeiP.jpg',  // The Godfather
+    'tt0120737': '/5VTN0pR8gcqV3EPUHHfMGnJYspL.jpg',  // LOTR: Fellowship
+    'tt0167260': '/lXhgCODAbBXL5buk9yEmTpOoOgR.jpg',  // LOTR: Return of the King
+    'tt2267998': '/5cdD7FiD5ZVnMi5cBCLOzHGBLBM.jpg',  // Gone Girl
+    'tt1375666': '/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg',  // Inception
+    'tt0114369': '/6bbZ6XyvgfjhQwbplnUh1LSj1ky.jpg',  // Se7en
+    'tt7286456': '/n6bUvigpRFqSwmPp1m2YAjPP1qO.jpg',  // Joker
+    'tt0993846': '/loBPpHHb3LM1p0TrFRGskifAzCL.jpg',  // The Wolf of Wall Street
+    'tt4154664': '/w2PMyoyLU22YvrGK3smVM9fW1jj.jpg',  // Captain Marvel
+    'tt0317219': '/3CxUndGhUcZdt1Zggjdb2HkLLQX.jpg',  // Cars
+    'tt4853102': '/nNmJruT8RRD0GFb1sCShXBZqSj9.jpg',  // Klaus
+};
+
+// Generic cinema placeholder from TMDB (no Unsplash)
+const GENERIC_POSTER = `${TMDB_IMG}/w500/gEFcDMzDiXgFHSFJIlSCeIefvLe.jpg`;
+
+function getHighResPoster(url: string): string {
+    if (!url || url === 'N/A') return GENERIC_POSTER;
+    // Remove OMDb resize suffix to get the original full-res image
     return url.replace(/\._V1_.*\.jpg$/g, '.jpg');
 }
 
@@ -142,6 +175,16 @@ function omdbToMovie(data: any): Movie {
     const rating = data.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '7.5';
     const poster = getHighResPoster(data.Poster);
     const genres = data.Genre && data.Genre !== 'N/A' ? data.Genre.split(', ') : ['Cinema'];
+
+    // Use a known TMDB backdrop if available, otherwise fall back to the OMDb poster
+    const tmdbBackdropPath = TMDB_BACKDROPS[data.imdbID];
+    const backdropUrl = tmdbBackdropPath
+        ? `${TMDB_IMG}/original${tmdbBackdropPath}`
+        : poster;
+    const heroUrl = tmdbBackdropPath
+        ? `${TMDB_IMG}/w1280${tmdbBackdropPath}`
+        : poster;
+
     return {
         id: data.imdbID,
         title: data.Title,
@@ -152,8 +195,8 @@ function omdbToMovie(data: any): Movie {
         quality: parseFloat(rating) >= 7.5 ? '4K' : 'HD',
         synopsis: data.Plot !== 'N/A' ? data.Plot : '',
         posterUrl: poster,
-        backdropUrl: poster,
-        heroUrl: poster,
+        backdropUrl,
+        heroUrl,
         tagline: (data.Awards && data.Awards !== 'N/A' ? data.Awards : data.Title).toUpperCase(),
         cast: data.Actors ? data.Actors.split(', ') : [],
         director: data.Director !== 'N/A' ? data.Director : 'Unknown',
@@ -199,7 +242,7 @@ export async function getGenreMovies(
                 genre.imdbIds.map(async (id) => {
                     if (seen.has(id)) return;
                     try {
-                        const res = await fetch(`${BASE_URL}?apikey=${API_KEY}&i=${id}&plot=full`);
+                        const res = await fetch(`${BASE_URL}?apikey=${getApiKey()}&i=${id}&plot=full`);
                         const data = await res.json();
                         if (data.Response === 'True') {
                             const movie = omdbToMovie(data);
