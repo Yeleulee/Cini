@@ -1,124 +1,152 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Star, Plus, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Play, Plus, Check, Star } from 'lucide-react';
 import { Movie } from '../types';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface MovieCardProps {
-  movie: Movie;
-  onSelect: (movie: Movie) => void;
-  index: number;
+    movie: Movie;
+    index: number;
+    onSelect: (movie: Movie) => void;
 }
 
-export const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect, index }) => {
-  const [inWatchlist, setInWatchlist] = useState(false);
+const WATCHLIST_KEY = 'cineflow_watchlist';
 
-  // Initialize watchlist state from localStorage
-  useEffect(() => {
+function readWatchlistIds(): string[] {
     try {
-      const watchlist = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
-      setInWatchlist(watchlist.some((m: Movie) => m.id === movie.id));
-    } catch { /* silent */ }
-  }, [movie.id]);
+        const wl: Movie[] = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]');
+        return wl.map((m) => m.id);
+    } catch {
+        return [];
+    }
+}
 
-  const handleToggleWatchlist = (e: React.MouseEvent) => {
-    e.stopPropagation();
+function toggleWatchlistItem(movie: Movie): boolean {
     try {
-      const watchlist = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
-      const newWatchlist = inWatchlist
-        ? watchlist.filter((m: Movie) => m.id !== movie.id)
-        : [...watchlist, movie];
+        const wl: Movie[] = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]');
+        const exists = wl.some((m) => m.id === movie.id);
+        const next = exists ? wl.filter((m) => m.id !== movie.id) : [...wl, movie];
+        localStorage.setItem(WATCHLIST_KEY, JSON.stringify(next));
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('watchlistUpdated'));
+        return !exists;
+    } catch {
+        return false;
+    }
+}
 
-      localStorage.setItem('cineflow_watchlist', JSON.stringify(newWatchlist));
-      // Notify CollectionsView (storage event) + App.tsx filter (custom event)
-      window.dispatchEvent(new Event('storage'));
-      window.dispatchEvent(new Event('watchlistUpdated'));
-      setInWatchlist(!inWatchlist);
-    } catch { /* silent */ }
-  };
+export const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onSelect }) => {
+    const [inWatchlist, setInWatchlist] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.04, 0.3), duration: 0.4 }}
-      className="group relative w-full aspect-[2/3] rounded-xl overflow-hidden cursor-pointer"
-      onClick={() => onSelect(movie)}
-    >
-      {/* Dynamic Glow Effect behind Card */}
-      <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl" />
+    useEffect(() => {
+        setInWatchlist(readWatchlistIds().includes(movie.id));
+    }, [movie.id]);
 
-      {/* Background Image */}
-      <img
-        src={movie.posterUrl}
-        alt={movie.title}
-        loading="lazy"
-        className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-110"
-      />
+    // Keep in sync if another card updates the watchlist
+    useEffect(() => {
+        const sync = () => setInWatchlist(readWatchlistIds().includes(movie.id));
+        window.addEventListener('watchlistUpdated', sync);
+        return () => window.removeEventListener('watchlistUpdated', sync);
+    }, [movie.id]);
 
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300" />
+    const handleWatchlist = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const added = toggleWatchlistItem(movie);
+        setInWatchlist(added);
+    };
 
-      {/* Content Container */}
-      <div className="absolute inset-0 p-4 flex flex-col justify-end">
+    const ratingNum = parseFloat(movie.rating);
+    const ratingColor =
+        ratingNum >= 8.0
+            ? 'text-emerald-400'
+            : ratingNum >= 7.0
+                ? 'text-yellow-400'
+                : 'text-zinc-400';
 
-        {/* Floating Quick Specs (Top Left) - Only visible on hover */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0">
-          <span className={`self-start px-2 py-0.5 text-[10px] font-bold rounded bg-white/10 backdrop-blur-md border border-white/20 ${movie.quality === '4K' ? 'text-yellow-400' : 'text-white'}`}>
-            {movie.quality}
-          </span>
-          <span className="self-start px-2 py-0.5 text-[10px] font-bold rounded bg-black/60 backdrop-blur-md text-white flex items-center gap-1">
-            <Star size={8} className="text-yellow-500 fill-yellow-500" /> {movie.rating}
-          </span>
-        </div>
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ delay: Math.min(index * 0.05, 0.4), duration: 0.4 }}
+            layout
+            className="group relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer bg-zinc-900 border border-white/5"
+            onClick={() => onSelect(movie)}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {/* Poster image */}
+            <img
+                src={movie.posterUrl}
+                alt={movie.title}
+                loading="lazy"
+                className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? 'scale-110' : 'scale-100'
+                    }`}
+            />
 
-        {/* Title & Metadata */}
-        <div className="transform transition-transform duration-300 group-hover:-translate-y-2">
-          <h3 className="text-white font-bold text-lg leading-tight mb-1 drop-shadow-lg">{movie.title}</h3>
-          <p className="text-zinc-400 text-xs font-medium flex items-center gap-2">
-            <span>{movie.year}</span>
-            <span className="w-1 h-1 rounded-full bg-zinc-600" />
-            <span className="truncate max-w-[120px]">{movie.genre[0]}</span>
-          </p>
-        </div>
+            {/* Persistent gradient at bottom */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
-        {/* Interactive Buttons */}
-        <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-75">
-          <button className="flex-1 bg-white text-black h-9 rounded-lg font-bold text-xs flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors shadow-lg shadow-white/10">
-            <Play size={12} fill="currentColor" /> WATCH NOW
-          </button>
-          <button
-            onClick={handleToggleWatchlist}
-            title={inWatchlist ? 'Remove from List' : 'Add to My List'}
-            className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-300 ${inWatchlist
-                ? 'bg-yellow-500 border-yellow-500 text-black'
-                : 'bg-black/40 border-white/20 text-white hover:bg-white/10'
-              }`}
-          >
-            <AnimatePresence mode="wait">
-              {inWatchlist ? (
-                <motion.div
-                  key="check"
-                  initial={{ scale: 0.5, rotate: -45 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  exit={{ scale: 0.5, rotate: 45 }}
+            {/* Quality badge — top left */}
+            <div className="absolute top-2.5 left-2.5">
+                <span
+                    className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${movie.quality === '4K'
+                            ? 'bg-yellow-500/95 text-black'
+                            : 'bg-white/20 text-white backdrop-blur-sm'
+                        }`}
                 >
-                  <Check size={16} strokeWidth={3} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="plus"
-                  initial={{ scale: 0.5, rotate: 45 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  exit={{ scale: 0.5, rotate: -45 }}
-                >
-                  <Plus size={18} strokeWidth={2.5} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
+                    {movie.quality}
+                </span>
+            </div>
+
+            {/* Watchlist toggle — top right */}
+            <motion.button
+                onClick={handleWatchlist}
+                whileTap={{ scale: 0.85 }}
+                title={inWatchlist ? 'Remove from My List' : 'Add to My List'}
+                className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center z-10 border transition-all duration-200 ${inWatchlist
+                        ? 'bg-yellow-500 border-yellow-500 text-black opacity-100'
+                        : 'bg-black/60 backdrop-blur border-white/20 text-white opacity-0 group-hover:opacity-100'
+                    }`}
+            >
+                {inWatchlist ? <Check size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={2.5} />}
+            </motion.button>
+
+            {/* Hover overlay — play button */}
+            <motion.div
+                initial={false}
+                animate={{ opacity: isHovered ? 1 : 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0 flex items-center justify-center"
+            >
+                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shadow-xl">
+                    <Play size={22} className="text-white ml-1" fill="currentColor" />
+                </div>
+            </motion.div>
+
+            {/* Bottom info — always visible */}
+            <div className="absolute bottom-0 left-0 right-0 p-3">
+                {/* Genre pill */}
+                {movie.genre[0] && (
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1 block">
+                        {movie.type === 'series' ? '📺 ' : '🎬 '}
+                        {movie.genre[0]}
+                    </span>
+                )}
+
+                <h3 className="text-white font-bold text-sm leading-tight truncate mb-1">
+                    {movie.title}
+                </h3>
+
+                <div className="flex items-center gap-1.5 text-[10px]">
+                    <span className="text-zinc-500">{movie.year}</span>
+                    <span className="text-zinc-700">·</span>
+                    <Star size={8} className={`${ratingColor} fill-current`} />
+                    <span className={`font-bold ${ratingColor}`}>{movie.rating}</span>
+                    <span className="text-zinc-700">·</span>
+                    <span className="text-zinc-500 truncate">{movie.duration}</span>
+                </div>
+            </div>
+        </motion.div>
+    );
 };

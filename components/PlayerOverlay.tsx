@@ -23,14 +23,9 @@ const SERVERS: Server[] = [
     { id: 'superembed', name: 'Server 3', type: 'embed', quality: '720p' },
 ];
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── helpers ─────────────────────────────────────────────────────────────────
 
-function getEmbedUrl(
-    movie: Movie,
-    server: Server,
-    season: number,
-    episode: number
-): string {
+function getEmbedUrl(movie: Movie, server: Server, season: number, episode: number): string {
     const isSeries = movie.type === 'series';
     switch (server.id) {
         case 'vidsrc':
@@ -50,7 +45,7 @@ function getEmbedUrl(
     }
 }
 
-// ─── sub-components ──────────────────────────────────────────────────────────
+// ─── EpisodePanel ─────────────────────────────────────────────────────────────
 
 interface EpisodePanelProps {
     movie: Movie;
@@ -61,16 +56,11 @@ interface EpisodePanelProps {
 }
 
 const EpisodePanel: React.FC<EpisodePanelProps> = ({
-    movie,
-    selectedSeason,
-    currentEpisodeIndex,
-    onSeasonChange,
-    onEpisodeSelect,
+    movie, selectedSeason, currentEpisodeIndex, onSeasonChange, onEpisodeSelect,
 }) => {
     const seasons = movie.seasons ?? [];
     const episodeListRef = useRef<HTMLDivElement>(null);
 
-    // Scroll to active episode when season changes
     useEffect(() => {
         const el = episodeListRef.current?.querySelector('[data-active="true"]') as HTMLElement | null;
         el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -88,8 +78,7 @@ const EpisodePanel: React.FC<EpisodePanelProps> = ({
                         onClick={() => onSeasonChange(s)}
                         className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${s.id === selectedSeason.id
                             ? 'bg-yellow-500 text-black border-yellow-500'
-                            : 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:border-yellow-500/60 hover:text-white'
-                            }`}
+                            : 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:border-yellow-500/60 hover:text-white'}`}
                     >
                         Season {s.number}
                     </button>
@@ -100,7 +89,7 @@ const EpisodePanel: React.FC<EpisodePanelProps> = ({
             <div
                 ref={episodeListRef}
                 style={{ scrollbarWidth: 'thin', scrollbarColor: '#a16207 #27272a' }}
-                className="ep-scroll flex flex-col gap-2 max-h-[420px] md:max-h-[520px] overflow-y-auto pr-2"
+                className="flex flex-col gap-2 max-h-[420px] md:max-h-[520px] overflow-y-auto pr-2"
             >
                 {selectedSeason.episodes.map((ep, idx) => {
                     const isActive = idx === currentEpisodeIndex;
@@ -111,10 +100,8 @@ const EpisodePanel: React.FC<EpisodePanelProps> = ({
                             onClick={() => onEpisodeSelect(idx)}
                             className={`group flex items-center gap-3 w-full text-left p-3 rounded-xl border transition-all duration-200 min-h-[60px] ${isActive
                                 ? 'bg-yellow-500/10 border-yellow-500/50 text-white'
-                                : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-white hover:bg-zinc-800/60 active:bg-zinc-800'
-                                }`}
+                                : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-white hover:bg-zinc-800/60'}`}
                         >
-                            {/* Thumbnail */}
                             <div className="relative flex-shrink-0 w-20 h-12 rounded-lg overflow-hidden bg-zinc-800">
                                 <img
                                     src={ep.thumbnailUrl || movie.posterUrl}
@@ -126,19 +113,15 @@ const EpisodePanel: React.FC<EpisodePanelProps> = ({
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     {isActive
                                         ? <CheckCircle size={18} className="text-yellow-500 drop-shadow-lg" />
-                                        : <PlayCircle size={18} className="text-white/60 group-hover:text-white transition-colors" />
-                                    }
+                                        : <PlayCircle size={18} className="text-white/60 group-hover:text-white transition-colors" />}
                                 </div>
                             </div>
-
-                            {/* Meta */}
                             <div className="flex-1 min-w-0">
                                 <p className={`text-sm font-bold truncate leading-tight ${isActive ? 'text-yellow-400' : ''}`}>
                                     E{ep.number} — {ep.title}
                                 </p>
                                 <p className="text-[11px] text-zinc-500 mt-0.5">{ep.duration}</p>
                             </div>
-
                             {isActive && (
                                 <span className="flex-shrink-0 text-[10px] font-bold text-yellow-500 uppercase tracking-wider pr-1">
                                     ▶ Playing
@@ -152,36 +135,22 @@ const EpisodePanel: React.FC<EpisodePanelProps> = ({
     );
 };
 
-// ─── Poster with onError fallback ─────────────────────────────────────────────
+// ─── MoviePoster (with graceful error fallback) ───────────────────────────────
 
-interface PosterProps {
-    movie: Movie;
-}
-
-const MoviePoster: React.FC<PosterProps> = ({ movie }) => {
+const MoviePoster: React.FC<{ movie: Movie }> = ({ movie }) => {
     const [src, setSrc] = useState(movie.posterUrl);
     const [failed, setFailed] = useState(false);
 
-    // Reset when movie changes
     useEffect(() => {
         setSrc(movie.posterUrl);
         setFailed(false);
     }, [movie.id, movie.posterUrl]);
 
-    const handleError = () => {
-        if (!failed && movie.backdropUrl && src !== movie.backdropUrl) {
-            setSrc(movie.backdropUrl);
-        } else {
-            setFailed(true);
-        }
-    };
-
     if (failed) {
-        // Elegant placeholder
         return (
             <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900 gap-3">
                 <span className="text-4xl opacity-20">🎬</span>
-                <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest text-center px-4">{movie.title}</p>
+                <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest text-center px-4 line-clamp-2">{movie.title}</p>
             </div>
         );
     }
@@ -191,13 +160,19 @@ const MoviePoster: React.FC<PosterProps> = ({ movie }) => {
             key={src}
             src={src}
             alt={movie.title}
-            className={`w-full h-full ${src === movie.backdropUrl ? 'object-cover object-center' : 'object-cover'}`}
-            onError={handleError}
+            className="w-full h-full object-cover"
+            onError={() => {
+                if (movie.backdropUrl && src !== movie.backdropUrl) {
+                    setSrc(movie.backdropUrl);
+                } else {
+                    setFailed(true);
+                }
+            }}
         />
     );
 };
 
-// ─── main component ──────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) => {
     const isSeries = movie.type === 'series';
@@ -214,7 +189,6 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
     const [showEpisodePanel, setShowEpisodePanel] = useState(false);
     const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Watchlist state
     const [inWatchlist, setInWatchlist] = useState(() => {
         try {
             const wl = JSON.parse(localStorage.getItem('cineflow_watchlist') || '[]');
@@ -245,15 +219,14 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
         };
     }, []);
 
-    // Loading animation
+    // Loading on server/episode change
     const isPlayingRef = useRef(false);
     useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
-
     useEffect(() => {
         if (!isPlayingRef.current) return;
         setIsLoading(true);
-        const timer = setTimeout(() => setIsLoading(false), 1400);
-        return () => clearTimeout(timer);
+        const t = setTimeout(() => setIsLoading(false), 1400);
+        return () => clearTimeout(t);
     }, [activeServer.id, currentEpisodeIndex, selectedSeason?.id, isPlaying]);
 
     // Auto-hide controls on idle
@@ -342,8 +315,7 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
 
             {/* ── Header ── */}
             <div
-                className={`fixed top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-[70] transition-all duration-500 ${isPlaying && !showControls ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
-                    }`}
+                className={`fixed top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-[70] transition-all duration-500 ${isPlaying && !showControls ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}
             >
                 <div className="flex items-center gap-3">
                     {isPlaying ? (
@@ -369,7 +341,7 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
             {/* ── INFO SCREEN ── */}
             <div className={`relative min-h-screen transition-opacity duration-500 ${isPlaying ? 'opacity-0 pointer-events-none absolute inset-0' : 'opacity-100'}`}>
 
-                {/* Cinematic backdrop behind the info screen */}
+                {/* Cinematic full-screen backdrop at 15% opacity */}
                 <div className="fixed inset-0 z-0 pointer-events-none">
                     {(movie.backdropUrl || movie.heroUrl) && (
                         <img
@@ -379,15 +351,41 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                     )}
-                    {/* Left-to-right fade so text is always readable */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/85 to-[#09090b]/50" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-[#09090b]/70" />
                 </div>
 
-                {/* Content */}
-                <div className="relative z-10 pt-28 pb-28 px-5 md:px-14 max-w-[1600px] mx-auto">
+                {/* ── Mobile hero banner (lg hidden) ── */}
+                <div className="relative lg:hidden w-full h-56 sm:h-72 overflow-hidden flex-shrink-0">
+                    <img
+                        src={movie.backdropUrl || movie.posterUrl}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover scale-110 blur-sm opacity-40"
+                        aria-hidden="true"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/50 to-transparent" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.92 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                            className="relative w-36 sm:w-48 aspect-[2/3] rounded-xl overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.8)] border border-white/10 bg-zinc-900"
+                        >
+                            <MoviePoster movie={movie} />
+                            <div className="absolute top-2 left-2">
+                                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-yellow-500 text-black">
+                                    {movie.quality}
+                                </span>
+                            </div>
+                        </motion.div>
+                    </div>
+                </div>
 
-                    {/* Top metadata pill */}
+                {/* ── Content ── */}
+                <div className="relative z-10 px-5 md:px-14 pb-28 pt-6 lg:pt-28 max-w-[1600px] mx-auto">
+
+                    {/* Metadata pill */}
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -414,8 +412,8 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
 
                     <div className="flex flex-col lg:flex-row items-start gap-10 lg:gap-14">
 
-                        {/* ── LEFT: info + actions ── */}
-                        <div className="flex-1 min-w-0">
+                        {/* ── Left: info + CTAs ── */}
+                        <div className="flex-1 min-w-0 max-w-2xl">
 
                             {/* Genre tags */}
                             <motion.div
@@ -431,12 +429,12 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                                 ))}
                             </motion.div>
 
-                            {/* Title — NO mix-blend-overlay, properly visible */}
+                            {/* Title — no mix-blend-overlay, always visible */}
                             <motion.h1
                                 initial={{ opacity: 0, y: 24 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2, duration: 0.65, ease: 'easeOut' }}
-                                className="text-4xl md:text-5xl lg:text-[3.5rem] font-serif-display font-bold tracking-tight leading-[1] mb-5 text-white"
+                                className="text-4xl md:text-5xl lg:text-[3.25rem] font-serif-display font-bold tracking-tight leading-[1] mb-5 text-white"
                             >
                                 {movie.title}
                             </motion.h1>
@@ -458,12 +456,12 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.35 }}
-                                className="text-zinc-400 text-sm md:text-[15px] leading-relaxed max-w-xl mb-6 font-light"
+                                className="text-zinc-400 text-sm md:text-[15px] leading-relaxed max-w-xl mb-6"
                             >
                                 {movie.synopsis}
                             </motion.p>
 
-                            {/* Director / Cast metadata */}
+                            {/* Director / Cast */}
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -471,20 +469,20 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                                 className="flex flex-col gap-2 mb-8 pl-3 border-l border-zinc-800"
                             >
                                 {movie.director && movie.director !== 'Unknown Director' && movie.director !== 'Unknown' && (
-                                    <p className="text-xs text-zinc-500">
+                                    <p className="text-xs">
                                         <span className="text-zinc-600 uppercase tracking-[0.15em] font-bold text-[10px] mr-2">Director</span>
                                         <span className="text-zinc-300">{movie.director}</span>
                                     </p>
                                 )}
                                 {movie.cast && movie.cast.length > 0 && (
-                                    <p className="text-xs text-zinc-500">
+                                    <p className="text-xs">
                                         <span className="text-zinc-600 uppercase tracking-[0.15em] font-bold text-[10px] mr-2">Starring</span>
                                         <span className="text-zinc-300">{movie.cast.slice(0, 4).join(', ')}</span>
                                     </p>
                                 )}
                             </motion.div>
 
-                            {/* CTA Buttons */}
+                            {/* CTAs */}
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -500,28 +498,24 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                                     </svg>
                                     Play Now
                                 </button>
-
                                 <button
                                     onClick={handleToggleWatchlist}
                                     className={`flex items-center gap-2 px-5 py-3 rounded-full border font-bold text-sm transition-all duration-300 ${inWatchlist
                                         ? 'bg-yellow-500/10 border-yellow-500/60 text-yellow-400 hover:bg-red-500/10 hover:border-red-400/60 hover:text-red-400'
-                                        : 'bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/40'
-                                        }`}
+                                        : 'bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/40'}`}
                                 >
                                     {inWatchlist
                                         ? <><BookmarkCheck size={15} /> Saved</>
-                                        : <><Bookmark size={15} /> My List</>
-                                    }
+                                        : <><Bookmark size={15} /> My List</>}
                                 </button>
                             </motion.div>
 
-                            {/* Episode Selector */}
+                            {/* Episode selector */}
                             {hasSeasonsData && selectedSeason && (
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 0.5 }}
-                                    className="mt-2"
                                 >
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-xs font-bold text-white uppercase tracking-[0.15em]">Episodes</h3>
@@ -540,26 +534,18 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                             )}
                         </div>
 
-                        {/* ── RIGHT: Poster (proper 2:3 aspect ratio with error fallback) ── */}
+                        {/* ── Right: Poster (desktop only, proper 2:3 aspect ratio) ── */}
                         <motion.div
                             initial={{ opacity: 0, x: 40, scale: 0.95 }}
                             animate={{ opacity: 1, x: 0, scale: 1 }}
                             transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                             className="hidden lg:block flex-shrink-0 w-[200px] xl:w-[240px] 2xl:w-[270px]"
                         >
-                            {/* 2:3 poster container */}
                             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden border border-white/10 shadow-[0_32px_80px_rgba(0,0,0,0.75)] bg-zinc-900">
                                 <MoviePoster movie={movie} />
-
-                                {/* Subtle bottom vignette */}
                                 <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-
-                                {/* Badges */}
                                 <div className="absolute top-3 left-3">
-                                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${movie.type === 'series'
-                                        ? 'bg-purple-600/90 text-white'
-                                        : 'bg-white/10 text-white border border-white/20'
-                                        }`}>
+                                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${movie.type === 'series' ? 'bg-purple-600/90 text-white' : 'bg-white/10 text-white border border-white/20'}`}>
                                         {movie.type === 'series' ? 'Series' : 'Film'}
                                     </span>
                                 </div>
@@ -570,11 +556,11 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                                 </div>
                             </div>
 
-                            {/* Match score bar */}
+                            {/* Match score */}
                             {movie.matchScore != null && (
                                 <div className="mt-4 space-y-1.5">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Match Score</span>
+                                        <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Match</span>
                                         <span className="text-xs font-bold text-yellow-500">{movie.matchScore}%</span>
                                     </div>
                                     <div className="h-0.5 rounded-full bg-zinc-800 overflow-hidden">
@@ -603,11 +589,8 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                     >
                         <div className="w-full h-full relative">
 
-                            {/* Player Top Controls */}
-                            <div
-                                className={`absolute top-0 left-0 right-0 z-20 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
-                                    }`}
-                            >
+                            {/* Player Top Bar */}
+                            <div className={`absolute top-0 left-0 right-0 z-20 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
                                 <div className="flex items-center justify-between px-4 md:px-6 py-4 bg-gradient-to-b from-black/90 to-transparent">
                                     <div className="flex items-center gap-3">
                                         <button
@@ -632,8 +615,7 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                                                 onClick={() => setShowEpisodePanel(p => !p)}
                                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${showEpisodePanel
                                                     ? 'bg-yellow-500 text-black border-yellow-500'
-                                                    : 'bg-black/40 text-zinc-300 border-white/10 hover:border-white/30 hover:text-white backdrop-blur-md'
-                                                    }`}
+                                                    : 'bg-black/40 text-zinc-300 border-white/10 hover:border-white/30 hover:text-white backdrop-blur-md'}`}
                                             >
                                                 Episodes
                                                 <ChevronDown size={12} className={`transition-transform ${showEpisodePanel ? 'rotate-180' : ''}`} />
@@ -647,13 +629,19 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                                                     onClick={() => setActiveServer(s)}
                                                     className={`px-2.5 py-1.5 text-[10px] font-bold uppercase rounded transition-all ${activeServer.id === s.id
                                                         ? 'bg-white text-black shadow'
-                                                        : 'text-zinc-400 hover:text-white hover:bg-white/10'
-                                                        }`}
+                                                        : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
                                                 >
                                                     {s.name}
                                                 </button>
                                             ))}
                                         </div>
+
+                                        <button
+                                            onClick={onClose}
+                                            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-300 hover:text-white transition-all ml-1"
+                                        >
+                                            <X size={18} />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -669,10 +657,7 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                                     >
                                         <div className="flex items-center justify-between mb-4">
                                             <h3 className="text-sm font-bold text-white uppercase tracking-wider">Select Episode</h3>
-                                            <button
-                                                onClick={() => setShowEpisodePanel(false)}
-                                                className="text-zinc-500 hover:text-white transition-colors"
-                                            >
+                                            <button onClick={() => setShowEpisodePanel(false)} className="text-zinc-500 hover:text-white transition-colors">
                                                 <X size={16} />
                                             </button>
                                         </div>

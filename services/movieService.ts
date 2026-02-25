@@ -16,14 +16,28 @@ const backdrop = (path: string) => `${TMDB_IMG}/original${path}`;
 
 // --- ID Lists for Curated Experience ---
 const FEATURED_IDS = [
-    'tt1877830', // The Batman
-    'tt1160419', // Dune
-    'tt12566356', // Cyberpunk: Edgerunners
-    'tt0816692', // Interstellar
-    'tt5180504', // The Witcher
-    'tt9362722', // Spider-Man: Across the Spider-Verse
-    'tt11126994', // Arcane
-    'tt1856101', // Blade Runner 2049
+    // Original curated 8
+    'tt1877830', // The Batman (2022)
+    'tt1160419', // Dune: Part One (2021)
+    'tt12566356', // Cyberpunk: Edgerunners (2022)
+    'tt0816692', // Interstellar (2014)
+    'tt5180504', // The Witcher (2019)
+    'tt9362722', // Spider-Man: Across the Spider-Verse (2023)
+    'tt11126994', // Arcane (2021)
+    'tt1856101', // Blade Runner 2049 (2017)
+    // New & Recent Releases
+    'tt15398776', // Oppenheimer (2023)
+    'tt3228774',  // Barbie (2023)
+    'tt14269590', // The Creator (2023)
+    'tt9663764',  // Aquaman and the Lost Kingdom (2023)
+    'tt21807272', // Rebel Moon (2023)
+    'tt5109280',  // Godzilla x Kong: The New Empire (2024)
+    'tt12037194', // Furiosa: A Mad Max Saga (2024)
+    'tt11389872', // Kingdom of the Planet of the Apes (2024)
+    'tt6263850',  // Deadpool & Wolverine (2024)
+    'tt18412256', // Alien: Romulus (2024)
+    'tt1630029',  // Avatar: The Way of Water (2022)
+    'tt15239678', // Dune: Part Two (2024)
 ];
 
 // --- In-Memory Cache to avoid redundant API calls ---
@@ -49,12 +63,22 @@ const makeSeason = (
     }))
 });
 
-// --- Instant Fallback Catalogue (uses real Amazon CDN posters from OMDb + TMDB backdrops) ---
-// Poster URLs are real Amazon CDN links retrieved directly from the OMDb API.
-// Backdrop URLs use the verified TMDB image CDN (no API key required for image serving).
+// --- Shuffle helper (Fisher-Yates) ---
+function shuffleArray<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+// --- Instant Fallback Catalogue ---
+// Poster URLs: real Amazon CDN links from OMDb API (no key needed to load images).
+// Backdrop URLs: TMDB image CDN (no API key needed for image serving).
 const AMZ = (path: string) => `https://m.media-amazon.com/images/M/${path}.jpg`;
 
-const FALLBACK_MOVIES: Movie[] = [
+const FALLBACK_MOVIES_RAW: Movie[] = [
     {
         id: 'tt1877830', title: 'The Batman', year: 2022, duration: '176 min',
         genre: ['Action', 'Crime', 'Drama'], rating: '7.8', quality: '4K',
@@ -182,13 +206,54 @@ const FALLBACK_MOVIES: Movie[] = [
         criticReview: { text: 'A breathtaking sequel to a sci-fi classic.', author: "Critic's Choice" },
         platformLogo: 'OMDb STREAM'
     },
+    // ── New 2023–2024 entries (real Amazon CDN poster URLs) ──────────────────
+    {
+        id: 'tt15398776', title: 'Oppenheimer', year: 2023, duration: '180 min',
+        genre: ['Biography', 'Drama', 'History'], rating: '8.9', quality: '4K',
+        synopsis: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II.',
+        posterUrl: AMZ('MV5BN2JkMDc5MGQtZjg3YS00NmFiLWIyZmQtZTJmNTM5MjVmYTQ4XkEyXkFqcGc@._V1_SX1000'),
+        backdropUrl: backdrop('/fm6KqXpk3M2HVlu3lQzbCYKxIQq.jpg'),
+        heroUrl: backdrop('/fm6KqXpk3M2HVlu3lQzbCYKxIQq.jpg'),
+        tagline: 'THE WORLD FOREVER CHANGES', cast: ['Cillian Murphy', 'Emily Blunt'], director: 'Christopher Nolan',
+        matchScore: 92, primaryColor: '#b45309', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'A monumental cinematic achievement.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
+    {
+        id: 'tt12037194', title: 'Furiosa: A Mad Max Saga', year: 2024, duration: '148 min',
+        genre: ['Action', 'Adventure', 'Sci-Fi'], rating: '7.8', quality: '4K',
+        synopsis: 'The origin story of renegade warrior Furiosa before she teamed up with Mad Max in a savage world.',
+        posterUrl: AMZ('MV5BNTcwYWE1NTYtOWNiYy00NzY3LWIwY2MtNjJmZDkxNDNmOWE1XkEyXkFqcGc@._V1_SX1000'),
+        backdropUrl: backdrop('/bpKIckKQ7BKOF3MLCoCp0vjqPBV.jpg'),
+        heroUrl: backdrop('/bpKIckKQ7BKOF3MLCoCp0vjqPBV.jpg'),
+        tagline: 'WITNESS HER', cast: ['Anya Taylor-Joy', 'Chris Hemsworth'], director: 'George Miller',
+        matchScore: 86, primaryColor: '#7c3aed', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'A thunderous, visually stunning action epic.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
+    {
+        id: 'tt6263850', title: 'Deadpool & Wolverine', year: 2024, duration: '127 min',
+        genre: ['Action', 'Comedy', 'Superhero'], rating: '7.8', quality: '4K',
+        synopsis: 'Deadpool is forced to work with Wolverine to stop a threat that could unravel the Marvel multiverse.',
+        posterUrl: AMZ('MV5BMzFiZGQwMGItMWZmNi00YTg2LWEzMDktMzgzMWIwODg0OGYyXkEyXkFqcGc@._V1_SX1000'),
+        backdropUrl: backdrop('/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg'),
+        heroUrl: backdrop('/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg'),
+        tagline: 'SAVE THE UNIVERSE', cast: ['Ryan Reynolds', 'Hugh Jackman'], director: 'Shawn Levy',
+        matchScore: 88, primaryColor: '#e11d48', type: 'movie', downloadOptions: ['4K', '1080p', '720p'],
+        criticReview: { text: 'A wildly entertaining superhero romp.', author: "Critic's Choice" },
+        platformLogo: 'OMDb STREAM'
+    },
 ];
+
+// Shuffle on each page load so the hero always rotates
+const FALLBACK_MOVIES: Movie[] = shuffleArray(FALLBACK_MOVIES_RAW);
+
 // Populate cache with fallback data immediately
 FALLBACK_MOVIES.forEach(m => _cache.set(m.id, m));
 
 // --- Helper Functions ---
 
-// Fallback poster: a real cinema image from a public CDN (no Unsplash)
+// Fallback poster: a real cinema image from Amazon CDN (no Unsplash)
 const PLACEHOLDER_POSTER = 'https://m.media-amazon.com/images/M/MV5BMTczNTI2ODUwOF5BMl5BanBnXkFtZTcwMTU0NTIzMw@@.jpg';
 
 const getHighResPoster = (url: string) => {
@@ -202,7 +267,6 @@ const mapOmdbToMovie = (data: any): Movie => {
     const rating = data.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '7.8';
     const omdbPoster = getHighResPoster(data.Poster);
 
-    // Logic to determine a good tagline. OMDb 'Awards' often looks cool like "Nominated for 3 Oscars".
     let tagline = "Cinematic Masterpiece";
     if (data.Awards && data.Awards !== 'N/A' && data.Awards.length > 10) {
         tagline = data.Awards;
@@ -210,10 +274,9 @@ const mapOmdbToMovie = (data: any): Movie => {
         tagline = data.Plot;
     }
 
-    // Genre parsing
     const genres = data.Genre && data.Genre !== 'N/A' ? data.Genre.split(', ') : ['Cinema'];
 
-    // Preserve the TMDB cinematic backdrop from the fallback entry if this movie is already cached
+    // Preserve the TMDB cinematic backdrop from the fallback entry if already cached
     const existingEntry = _cache.get(data.imdbID);
     const heroBackdrop = existingEntry?.heroUrl ?? omdbPoster;
     const wideBackdrop = existingEntry?.backdropUrl ?? omdbPoster;
@@ -290,7 +353,6 @@ export const searchMovies = async (query: string): Promise<Movie[]> => {
 };
 
 export const getMovieDetails = async (id: string): Promise<Movie | null> => {
-    // Return cached version immediately if available
     if (_cache.has(id)) return _cache.get(id)!;
     try {
         const response = await fetch(`${BASE_URL}?apikey=${getApiKey()}&i=${id}&plot=full`);
@@ -309,16 +371,14 @@ export const getMovieDetails = async (id: string): Promise<Movie | null> => {
 
 /**
  * Returns the fallback catalogue instantly (zero wait), then fetches real
- * OMDb data in the background. When each real result arrives, onUpdate is
- * called with the full updated list so the UI can re-render incrementally.
+ * OMDb data in the background. When each result arrives, onUpdate is called
+ * with the full updated list so the UI can re-render incrementally.
  */
 export const getFeaturedContent = async (
     onUpdate?: (movies: Movie[]) => void
 ): Promise<Movie[]> => {
-    // Return fallback immediately so the UI renders without waiting for the network
     const snapshot = [...FALLBACK_MOVIES];
 
-    // Kick off background hydration ΓÇö don't await this
     (async () => {
         try {
             let hydrated = [...snapshot];
@@ -329,8 +389,13 @@ export const getFeaturedContent = async (
                     if (data.Response === 'True') {
                         const movie = mapOmdbToMovie(data);
                         _cache.set(id, movie);
-                        // Replace the fallback entry in our hydrated list
-                        hydrated = hydrated.map(m => m.id === id ? movie : m);
+                        // Add or replace in our hydrated list
+                        const exists = hydrated.findIndex(m => m.id === id);
+                        if (exists >= 0) {
+                            hydrated = hydrated.map(m => m.id === id ? movie : m);
+                        } else {
+                            hydrated = [...hydrated, movie];
+                        }
                         onUpdate?.([...hydrated]);
                     }
                 } catch (_) { /* keep fallback */ }

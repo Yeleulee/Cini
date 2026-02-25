@@ -78,7 +78,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onSelectMovie 
                     className="flex flex-col sm:flex-row sm:items-end justify-between gap-4"
                 >
                     <div>
-                        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white leading-none">
+                        <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-white leading-none">
                             My Collection
                         </h1>
                         {watchlist.length > 0 && (
@@ -123,8 +123,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onSelectMovie 
                                 key={f.key}
                                 onClick={() => setFilter(f.key)}
                                 className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${filter === f.key
-                                        ? 'bg-yellow-500 text-black border-yellow-500'
-                                        : 'text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-white'
+                                    ? 'bg-yellow-500 text-black border-yellow-500'
+                                    : 'text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-white'
                                     }`}
                             >
                                 {f.label}
@@ -153,7 +153,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onSelectMovie 
                         >
                             <Bookmark size={36} className="text-zinc-600" />
                         </motion.div>
-                        <h2 className="text-2xl font-bold text-white mb-3">Nothing saved yet</h2>
+                        <h2 className="text-lg font-bold text-white mb-3">Nothing saved yet</h2>
                         <p className="text-zinc-500 text-sm max-w-sm leading-relaxed mb-8">
                             Browse the library and tap the{' '}
                             <span className="inline-flex items-center justify-center w-5 h-5 rounded border border-zinc-600 text-white text-xs font-bold align-middle mx-0.5">+</span>
@@ -211,8 +211,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ onSelectMovie 
                                     {/* Type badge — top left */}
                                     <div className="absolute top-2.5 left-2.5">
                                         <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${movie.type === 'series'
-                                                ? 'bg-purple-600/90 text-white'
-                                                : 'bg-yellow-500/95 text-black'
+                                            ? 'bg-purple-600/90 text-white'
+                                            : 'bg-yellow-500/95 text-black'
                                             }`}>
                                             {movie.type === 'series' ? 'Series' : 'Film'}
                                         </span>

@@ -104,7 +104,7 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
       </AnimatePresence>
 
       {/* --- Main Content Layer --- */}
-      <div className="absolute inset-0 z-20 px-6 md:px-20 h-full flex flex-col justify-center">
+      <div className="absolute inset-0 z-20 px-6 md:px-20 h-full flex flex-col justify-center pt-24">
 
         {/* TOP LEFT METADATA PILLS (Matching screenshot "HD 7.8 176 MIN ACTION") */}
         <motion.div
@@ -149,7 +149,7 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-[12vw] md:text-[8vw] font-serif-display font-bold leading-[0.85] text-white tracking-tighter mb-6 mix-blend-overlay"
+            className="text-[7vw] md:text-[5vw] font-serif-display font-bold leading-[0.9] text-white tracking-tighter mb-5 drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)]"
           >
             {movie.title}
           </motion.h1>
@@ -162,8 +162,8 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
             transition={{ delay: 0.7 }}
             className="flex flex-col md:flex-row gap-6 max-w-2xl"
           >
-            <p className="text-zinc-300 text-sm md:text-lg font-serif italic leading-relaxed border-l-2 border-yellow-500 pl-4">
-              "{synopsisPreview}"
+            <p className="text-zinc-300 text-xs md:text-sm font-serif italic leading-relaxed border-l-2 border-yellow-500 pl-4 drop-shadow-[0_2px_8px_rgba(0,0,0,1)] max-w-md">
+              &ldquo;{synopsisPreview}&rdquo;
             </p>
           </motion.div>
 
@@ -173,7 +173,7 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mt-8 text-xl md:text-2xl text-white/80 font-light tracking-[0.15em] uppercase font-sans"
+            className="mt-6 text-sm md:text-base text-white/70 font-medium tracking-[0.2em] uppercase font-sans drop-shadow-[0_2px_8px_rgba(0,0,0,1)]"
           >
             {movie.tagline}
           </motion.p>

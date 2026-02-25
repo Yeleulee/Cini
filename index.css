@@ -2,29 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Typography ─────────────────────────────────────────── */
+/* ─── Design Token: Type Scale ───────────────────────────────────────────── */
+/*
+  Root font-size explicitly set to 15px (not 16px browser default) so
+  Tailwind's rem-based scale sits slightly tighter — avoiding the
+  "everything is too big" effect that Space Grotesk + 16px produces.
+*/
+:root {
+    font-size: 15px;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-serif: 'Cinzel', 'Georgia', serif;
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* ─── Body ───────────────────────────────────────────────────────────────── */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    /* 14px at root 15px — comfortable reading */
+    line-height: 1.6;
     background-color: #09090b;
     color: #fff;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Headings — tighter scale ───────────────────────────────────────────── */
+/*
+  Override both the browser's UA stylesheet AND Tailwind's base reset so
+  headings use Space Grotesk with controlled sizes rather than inheriting
+  the bloated UA defaults.
+*/
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    /* No margin — components control spacing via Tailwind */
+    margin: 0;
 }
 
-/* ─── Custom Font Utilities ──────────────────────────────── */
+/* Explicit heading scale (Tailwind classes still override these via utilities) */
+h1 {
+    font-size: 2rem;
+}
+
+/* ~30px */
+h2 {
+    font-size: 1.5rem;
+}
+
+/* ~22px */
+h3 {
+    font-size: 1.2rem;
+}
+
+/* ~18px */
+h4 {
+    font-size: 1rem;
+}
+
+/* ~15px */
+h5 {
+    font-size: 0.875rem;
+}
+
+/* ~13px */
+h6 {
+    font-size: 0.75rem;
+}
+
+/* ~11px */
+
+/* ─── Serif Display Utility ──────────────────────────────────────────────── */
 .font-serif-display {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-serif);
 }
 
-/* ─── Scrollbar Hide ─────────────────────────────────────── */
+/* ─── Paragraph ──────────────────────────────────────────────────────────── */
+p {
+    margin: 0;
+    font-size: 0.875rem;
+    /* 13px — avoids "wall of text" feel */
+    line-height: 1.65;
+}
+
+/* ─── Scrollbar Hide ──────────────────────────────────────────────────────── */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -34,18 +110,53 @@ h6 {
     scrollbar-width: none;
 }
 
-/* ─── Glassmorphism Panel ────────────────────────────────── */
+/* ─── Episode List Scrollbar ─────────────────────────────────────────────── */
+.ep-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.ep-scroll::-webkit-scrollbar-track {
+    background: #27272a;
+    border-radius: 4px;
+}
+
+.ep-scroll::-webkit-scrollbar-thumb {
+    background: #a16207;
+    border-radius: 4px;
+}
+
+.ep-scroll::-webkit-scrollbar-thumb:hover {
+    background: #eab308;
+}
+
+/* ─── Glassmorphism ──────────────────────────────────────────────────────── */
 .glass-panel {
-    background: rgba(20, 20, 20, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(20, 20, 20, 0.70);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* ─── Brush Mask (PlayerOverlay Loading Transition) ─────── */
+@media (min-width: 768px) {
+    .glass-panel {
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+}
+
+/* ─── Brush Mask (PlayerOverlay Loading Transition) ─────────────────────── */
 .brush-mask {
     mask-image: url('https://upload.wikimedia.org/wikipedia/commons/2/2c/Ink_brush_stroke.png');
     mask-size: cover;
     mask-position: center;
     mask-repeat: no-repeat;
+}
+
+/* ─── Skeleton root placeholder ──────────────────────────────────────────── */
+#root:empty::before {
+    content: '';
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: #09090b;
 }
