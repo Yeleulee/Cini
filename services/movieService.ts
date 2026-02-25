@@ -235,7 +235,7 @@ const FALLBACK_MOVIES_RAW: Movie[] = [
         id: 'tt6263850', title: 'Deadpool & Wolverine', year: 2024, duration: '127 min',
         genre: ['Action', 'Comedy', 'Superhero'], rating: '7.8', quality: '4K',
         synopsis: 'Deadpool is forced to work with Wolverine to stop a threat that could unravel the Marvel multiverse.',
-        posterUrl: AMZ('MV5BMzFiZGQwMGItMWZmNi00YTg2LWEzMDktMzgzMWIwODg0OGYyXkEyXkFqcGc@._V1_SX1000'),
+        posterUrl: 'https://image.tmdb.org/t/p/w780/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg',
         backdropUrl: backdrop('/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg'),
         heroUrl: backdrop('/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg'),
         tagline: 'SAVE THE UNIVERSE', cast: ['Ryan Reynolds', 'Hugh Jackman'], director: 'Shawn Levy',
