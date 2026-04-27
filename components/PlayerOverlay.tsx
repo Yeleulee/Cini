@@ -18,9 +18,10 @@ interface Server {
 }
 
 const SERVERS: Server[] = [
-    { id: 'vidsrc', name: 'Server 1', type: 'embed', quality: '1080p' },
-    { id: 'vidlink', name: 'Server 2', type: 'embed', quality: '1080p' },
-    { id: 'superembed', name: 'Server 3', type: 'embed', quality: '720p' },
+    { id: 'vidsrcme', name: 'VidSrc', type: 'embed', quality: '1080p' },
+    { id: 'vidsrc_xyz', name: 'Server 2', type: 'embed', quality: '1080p' },
+    { id: 'vidlink', name: 'Server 3', type: 'embed', quality: '1080p' },
+    { id: 'superembed', name: 'Server 4', type: 'embed', quality: '720p' },
 ];
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -28,7 +29,12 @@ const SERVERS: Server[] = [
 function getEmbedUrl(movie: Movie, server: Server, season: number, episode: number): string {
     const isSeries = movie.type === 'series';
     switch (server.id) {
-        case 'vidsrc':
+        case 'vidsrcme':
+            // Using the official vidsrcme.ru embed domain provided by user
+            return isSeries
+                ? `https://vidsrc-embed.ru/embed/tv?imdb=${movie.id}&season=${season}&episode=${episode}`
+                : `https://vidsrc-embed.ru/embed/movie?imdb=${movie.id}`;
+        case 'vidsrc_xyz':
             return isSeries
                 ? `https://vidsrc.xyz/embed/tv?imdb=${movie.id}&season=${season}&episode=${episode}`
                 : `https://vidsrc.xyz/embed/movie?imdb=${movie.id}`;
@@ -41,7 +47,9 @@ function getEmbedUrl(movie: Movie, server: Server, season: number, episode: numb
                 ? `https://www.2embed.cc/embedtv/${movie.id}&s=${season}&e=${episode}`
                 : `https://www.2embed.cc/embed/${movie.id}`;
         default:
-            return `https://vidsrc.xyz/embed/movie?imdb=${movie.id}`;
+            return isSeries
+                ? `https://vidsrc-embed.ru/embed/tv?imdb=${movie.id}&season=${season}&episode=${episode}`
+                : `https://vidsrc-embed.ru/embed/movie?imdb=${movie.id}`;
     }
 }
 
