@@ -2,17 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Design Token: Type Scale ───────────────────────────────────────────── */
-/*
-  Root font-size explicitly set to 15px (not 16px browser default) so
-  Tailwind's rem-based scale sits slightly tighter — avoiding the
-  "everything is too big" effect that Space Grotesk + 16px produces.
-*/
+/* ─── Design Tokens ──────────────────────────────────────────────────────── */
 :root {
     font-size: 15px;
-    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-    --font-display: 'Space Grotesk', system-ui, sans-serif;
-    --font-serif: 'Cinzel', 'Georgia', serif;
+    --font-body:    'Inter',     system-ui, -apple-system, sans-serif;
+    --font-display: 'Outfit',    system-ui, sans-serif;
+    --font-hero:    'Bebas Neue', Impact,   sans-serif;
+    --font-serif:   'Cinzel',    'Georgia', serif;
+
+    /* Brand colours */
+    --gold:         #eab308;   /* yellow-500  */
+    --gold-light:   #fde68a;   /* yellow-200  */
+    --gold-dim:     #854d0e;   /* yellow-800  */
+    --surface:      #09090b;   /* zinc-950    */
+    --surface-2:    #18181b;   /* zinc-900    */
+    --border:       rgba(255,255,255,0.08);
+
+    /* Liquid Glass values */
+    --glass-bg:     rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-blur:   12px;
+    --glass-shine:  rgba(255, 255, 255, 0.18);
 }
 
 /* ─── Base Reset ─────────────────────────────────────────────────────────── */
@@ -152,6 +162,40 @@ p {
     mask-repeat: no-repeat;
 }
 
+/* ── Ken Burns zoom animation ───────────────────────────────────────────── */
+@keyframes kenBurns {
+    0%   { transform: scale(1.08) translate(0px, 0px); }
+    25%  { transform: scale(1.12) translate(-8px, -4px); }
+    50%  { transform: scale(1.1)  translate(4px, -8px); }
+    75%  { transform: scale(1.13) translate(-4px, 4px); }
+    100% { transform: scale(1.08) translate(0px, 0px); }
+}
+
+.ken-burns {
+    animation: kenBurns 18s ease-in-out infinite;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+/* ── Hero title text shadow ───────────────────────────────────────── */
+.hero-title-shadow {
+    text-shadow:
+        0 2px 4px rgba(0,0,0,0.9),
+        0 8px 24px rgba(0,0,0,0.7),
+        0 20px 60px rgba(0,0,0,0.5);
+}
+
+/* ── Snap-scroll carousel ───────────────────────────────────────── */
+.snap-carousel {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.snap-item {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+}
+
 /* ─── Skeleton root placeholder ──────────────────────────────────────────── */
 #root:empty::before {
     content: '';
@@ -160,3 +204,153 @@ p {
     inset: 0;
     background: #09090b;
 }
+
+/* ══ LIQUID GLASS SYSTEM ════════════════════════════════════════════════════ */
+
+/* Base liquid-glass surface (panels, cards) */
+.liquid-panel {
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.10) 0%,
+        rgba(255,255,255,0.04) 50%,
+        rgba(255,255,255,0.08) 100%
+    );
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* Icon button — liquid glass capsule */
+.icon-glass {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+        145deg,
+        rgba(255,255,255,0.13) 0%,
+        rgba(255,255,255,0.05) 55%,
+        rgba(255,255,255,0.09) 100%
+    );
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.22),
+        inset 0 -1px 0 rgba(0,0,0,0.15),
+        0 4px 16px rgba(0,0,0,0.35);
+    transition: all 0.25s ease;
+}
+
+/* Shine shimmer pseudo-element */
+.icon-glass::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255,255,255,0.18) 50%,
+        transparent 100%
+    );
+    transform: skewX(-20deg);
+    transition: left 0.5s ease;
+    pointer-events: none;
+}
+
+.icon-glass:hover::before {
+    left: 120%;
+}
+
+.icon-glass:hover {
+    background: linear-gradient(
+        145deg,
+        rgba(255,255,255,0.20) 0%,
+        rgba(255,255,255,0.08) 55%,
+        rgba(255,255,255,0.14) 100%
+    );
+    border-color: rgba(255,255,255,0.28);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.30),
+        inset 0 -1px 0 rgba(0,0,0,0.10),
+        0 6px 24px rgba(0,0,0,0.45);
+    transform: translateY(-1px);
+}
+
+/* Active / selected icon-glass (yellow glow) */
+.icon-glass.active,
+.icon-glass[data-active="true"] {
+    background: linear-gradient(
+        145deg,
+        rgba(234,179,8,0.22) 0%,
+        rgba(234,179,8,0.08) 60%,
+        rgba(234,179,8,0.16) 100%
+    );
+    border-color: rgba(234,179,8,0.40);
+    box-shadow:
+        inset 0 1px 0 rgba(255,213,0,0.25),
+        0 0 20px rgba(234,179,8,0.20),
+        0 4px 16px rgba(0,0,0,0.35);
+    color: var(--gold) !important;
+}
+
+/* ── Gold CTA button ─────────────────────────────────────────────────────── */
+.btn-gold {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+    color: #000;
+    font-weight: 800;
+    border: 1px solid rgba(234,179,8,0.6);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.30),
+        0 0 24px rgba(234,179,8,0.35),
+        0 4px 16px rgba(0,0,0,0.4);
+    transition: all 0.22s ease;
+}
+
+.btn-gold::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -70%;
+    width: 45%; height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.28),
+        transparent
+    );
+    transform: skewX(-15deg);
+    transition: left 0.45s ease;
+    pointer-events: none;
+}
+
+.btn-gold:hover::before { left: 130%; }
+
+.btn-gold:hover {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.40),
+        0 0 36px rgba(234,179,8,0.55),
+        0 6px 20px rgba(0,0,0,0.45);
+    transform: translateY(-1px) scale(1.02);
+}
+
+.btn-gold:active { transform: scale(0.97); }
+
+/* ── Glass text-field ────────────────────────────────────────────────────── */
+.input-glass {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-glass:focus {
+    outline: none;
+    border-color: rgba(234,179,8,0.5);
+    box-shadow: 0 0 0 3px rgba(234,179,8,0.12);
+}

@@ -23,6 +23,10 @@ export const GENRES: Genre[] = [
             'tt5180504', // The Witcher
             'tt4154796', // Avengers: Endgame
             'tt3501632', // Thor: Ragnarok
+            'tt6263850', // Deadpool & Wolverine (2024)
+            'tt12037194',// Furiosa (2024)
+            'tt11389872',// Kingdom of the Planet of the Apes (2024)
+            'tt15239678',// Dune: Part Two (2024)
         ],
     },
     {
@@ -37,6 +41,10 @@ export const GENRES: Genre[] = [
             'tt12566356',// Cyberpunk: Edgerunners
             'tt0133093', // The Matrix
             'tt0910970', // WALL-E
+            'tt14269590',// The Creator (2023)
+            'tt15239678',// Dune: Part Two (2024)
+            'tt21807272',// Rebel Moon (2023)
+            'tt5109280', // Godzilla x Kong (2024)
         ],
     },
     {
@@ -51,6 +59,8 @@ export const GENRES: Genre[] = [
             'tt0068646', // The Godfather
             'tt0120737', // The Lord of the Rings: Fellowship
             'tt0167260', // LOTR: Return of the King
+            'tt15398776',// Oppenheimer (2023)
+            'tt3228774',  // Barbie (2023)
         ],
     },
     {
@@ -65,6 +75,8 @@ export const GENRES: Genre[] = [
             'tt0317219', // Cars
             'tt0910970', // WALL-E
             'tt4853102', // Klaus
+            'tt12584954',// Inside Out 2 (2024)
+            'tt13622970',// Moana 2 (2024)
         ],
     },
     {
@@ -79,6 +91,8 @@ export const GENRES: Genre[] = [
             'tt1375666', // Inception
             'tt0816692', // Interstellar
             'tt0114369', // Se7en
+            'tt18412256',// Alien: Romulus (2024)
+            'tt22022452',// Twisters (2024)
         ],
     },
     {
@@ -93,6 +107,8 @@ export const GENRES: Genre[] = [
             'tt4154664', // Captain Marvel
             'tt0910970', // WALL-E
             'tt0317219', // Cars
+            'tt3228774',  // Barbie (2023)
+            'tt6263850', // Deadpool & Wolverine (2024)
         ],
     },
     {
@@ -107,6 +123,7 @@ export const GENRES: Genre[] = [
             'tt0167260', // LOTR: Return of the King
             'tt3501632', // Thor: Ragnarok
             'tt4154796', // Avengers: Endgame
+            'tt11304740',// Captain America: Brave New World (2025)
         ],
     },
     {
@@ -121,12 +138,16 @@ export const GENRES: Genre[] = [
             'tt0114369', // Se7en
             'tt1375666', // Inception
             'tt0133093', // The Matrix
+            'tt14269590',// The Creator (2023)
         ],
     },
 ];
 
 // ── cache so we don't re-fetch already loaded genre movies ──────────────────
-const _genreCache = new Map<string, Movie[]>();
+// Each entry stores { movies, timestamp } — expires after CACHE_TTL_MS
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+interface GenreCacheEntry { movies: Movie[]; ts: number; }
+const _genreCache = new Map<string, GenreCacheEntry>();
 
 // --- API Key Rotation (same pool as movieService) ---
 const API_KEYS = ['4ba2f2d6', 'f6bca86f'];
@@ -227,9 +248,16 @@ export async function getGenreMovies(
         genre.imdbIds.includes(m.id)
     );
 
-    // Return from cache if available
-    if (_genreCache.has(genre.id)) {
-        return _genreCache.get(genre.id)!;
+    // Return from cache if available AND not expired
+    const cached = _genreCache.get(genre.id);
+    if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
+        // Merge any new catalogue movies not in cache
+        const cachedIds = new Set(cached.movies.map(m => m.id));
+        const merged = [
+            ...cached.movies,
+            ...instant.filter(m => !cachedIds.has(m.id))
+        ];
+        return merged;
     }
 
     // Kick off background fetch without blocking the caller
@@ -254,7 +282,7 @@ export async function getGenreMovies(
                 })
             );
 
-            _genreCache.set(genre.id, accumulated);
+            _genreCache.set(genre.id, { movies: accumulated, ts: Date.now() });
         } catch { /* silent */ }
     })();
 

@@ -1,4 +1,4 @@
-﻿import { Movie, Season, Collection } from '../types';
+import { Movie, Season, Collection } from '../types';
 
 // --- API Key Rotation (round-robin to avoid rate limits) ---
 const API_KEYS = ['4ba2f2d6', 'f6bca86f'];
@@ -16,7 +16,7 @@ const backdrop = (path: string) => `${TMDB_IMG}/original${path}`;
 
 // --- ID Lists for Curated Experience ---
 const FEATURED_IDS = [
-    // Original curated 8
+    // Classics & acclaimed
     'tt1877830', // The Batman (2022)
     'tt1160419', // Dune: Part One (2021)
     'tt12566356', // Cyberpunk: Edgerunners (2022)
@@ -25,19 +25,31 @@ const FEATURED_IDS = [
     'tt9362722', // Spider-Man: Across the Spider-Verse (2023)
     'tt11126994', // Arcane (2021)
     'tt1856101', // Blade Runner 2049 (2017)
-    // New & Recent Releases
+    // 2023 Releases
     'tt15398776', // Oppenheimer (2023)
     'tt3228774',  // Barbie (2023)
     'tt14269590', // The Creator (2023)
     'tt9663764',  // Aquaman and the Lost Kingdom (2023)
     'tt21807272', // Rebel Moon (2023)
+    'tt1630029',  // Avatar: The Way of Water (2022)
+    'tt15239678', // Dune: Part Two (2024)
+    // 2024 Releases
     'tt5109280',  // Godzilla x Kong: The New Empire (2024)
     'tt12037194', // Furiosa: A Mad Max Saga (2024)
     'tt11389872', // Kingdom of the Planet of the Apes (2024)
     'tt6263850',  // Deadpool & Wolverine (2024)
     'tt18412256', // Alien: Romulus (2024)
-    'tt1630029',  // Avatar: The Way of Water (2022)
-    'tt15239678', // Dune: Part Two (2024)
+    'tt22022452', // Twisters (2024)
+    'tt8041270',  // Transformers One (2024)
+    'tt13622970', // Moana 2 (2024)
+    'tt12584954', // Inside Out 2 (2024)
+    'tt21823606', // Kraven the Hunter (2024)
+    // 2025 Releases
+    'tt11304740', // Captain America: Brave New World (2025)
+    'tt6263850',  // Thunderbolts (2025) — placeholder, reuse slot
+    'tt20969586', // Mickey 17 (2025)
+    'tt10954600', // Avengers: Doomsday (2025)
+    'tt21692408', // Jurassic World Rebirth (2025)
 ];
 
 // --- In-Memory Cache to avoid redundant API calls ---
@@ -251,10 +263,15 @@ const FALLBACK_MOVIES: Movie[] = shuffleArray(FALLBACK_MOVIES_RAW);
 // Populate cache with fallback data immediately
 FALLBACK_MOVIES.forEach(m => _cache.set(m.id, m));
 
+// Track whether we've already done the background hydration this session
+let _hydratedOnce = false;
+// The full live catalogue (grows as OMDb responds)
+let _liveCatalogue: Movie[] = [...FALLBACK_MOVIES];
+
 // --- Helper Functions ---
 
-// Fallback poster: a real cinema image from Amazon CDN (no Unsplash)
-const PLACEHOLDER_POSTER = 'https://m.media-amazon.com/images/M/MV5BMTczNTI2ODUwOF5BMl5BanBnXkFtZTcwMTU0NTIzMw@@.jpg';
+// Fallback: inline SVG so it never makes a network request and never breaks
+const PLACEHOLDER_POSTER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600' viewBox='0 0 400 600'%3E%3Crect width='400' height='600' fill='%2318181b'/%3E%3Crect x='140' y='220' width='120' height='120' rx='60' fill='%2327272a'/%3E%3Ctext x='200' y='285' text-anchor='middle' font-size='52' fill='%2352525b'%3E%F0%9F%8E%AC%3C/text%3E%3Ctext x='200' y='380' text-anchor='middle' font-size='13' fill='%2352525b' font-family='Inter,sans-serif'%3EComing Soon%3C/text%3E%3C/svg%3E";
 
 const getHighResPoster = (url: string) => {
     if (!url || url === 'N/A') return PLACEHOLDER_POSTER;
@@ -377,32 +394,43 @@ export const getMovieDetails = async (id: string): Promise<Movie | null> => {
 export const getFeaturedContent = async (
     onUpdate?: (movies: Movie[]) => void
 ): Promise<Movie[]> => {
+    // Always return the current live catalogue immediately (already has fallbacks)
+    if (_hydratedOnce) {
+        // Shuffle the catalogue so the Hero sees a different order each visit
+        const shuffled = shuffleArray(_liveCatalogue);
+        onUpdate?.(shuffled);
+        return shuffled;
+    }
+
     const snapshot = [...FALLBACK_MOVIES];
 
     (async () => {
         try {
-            let hydrated = [...snapshot];
-            const promises = FEATURED_IDS.map(async (id) => {
+            // Deduplicate FEATURED_IDS
+            const uniqueIds = [...new Set(FEATURED_IDS)];
+            const promises = uniqueIds.map(async (id) => {
                 try {
                     const response = await fetch(`${BASE_URL}?apikey=${getApiKey()}&i=${id}&plot=full`);
                     const data = await response.json();
                     if (data.Response === 'True') {
                         const movie = mapOmdbToMovie(data);
                         _cache.set(id, movie);
-                        // Add or replace in our hydrated list
-                        const exists = hydrated.findIndex(m => m.id === id);
-                        if (exists >= 0) {
-                            hydrated = hydrated.map(m => m.id === id ? movie : m);
+                        // Add or replace in the live catalogue
+                        const existsIdx = _liveCatalogue.findIndex(m => m.id === id);
+                        if (existsIdx >= 0) {
+                            _liveCatalogue = _liveCatalogue.map(m => m.id === id ? movie : m);
                         } else {
-                            hydrated = [...hydrated, movie];
+                            _liveCatalogue = [..._liveCatalogue, movie];
                         }
-                        onUpdate?.([...hydrated]);
+                        // Notify UI with shuffled result so Hero rotates differently each call
+                        onUpdate?.(shuffleArray([..._liveCatalogue]));
                     }
-                } catch (_) { /* keep fallback */ }
+                } catch (_) { /* keep fallback for this ID */ }
             });
             await Promise.all(promises);
+            _hydratedOnce = true;
         } catch (e) {
-            console.error("Background hydration error:", e);
+            console.error('Background hydration error:', e);
         }
     })();
 

@@ -111,16 +111,14 @@ const GenreSection: React.FC<GenreSectionProps> = ({ allMovies, onSelectMovie })
             transition={{ duration: 0.35 }}
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-5 gap-y-9"
           >
-            <AnimatePresence mode="popLayout">
-              {genreMovies.map((movie, index) => (
-                <MovieCard
-                  key={movie.id}
-                  movie={movie}
-                  index={index}
-                  onSelect={onSelectMovie}
-                />
-              ))}
-            </AnimatePresence>
+            {genreMovies.map((movie, index) => (
+              <MovieCard
+                key={movie.id}
+                movie={movie}
+                index={index}
+                onSelect={onSelectMovie}
+              />
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -142,7 +140,7 @@ const GenreSection: React.FC<GenreSectionProps> = ({ allMovies, onSelectMovie })
 
 type TabId = 'HOME' | 'MOVIES' | 'SERIES' | 'COLLECTIONS';
 
-const CATEGORIES = ['Recommended', 'Trending', 'My List', 'Sci-Fi', 'Award Winners'];
+const CATEGORIES = ['Recommended', 'Trending', 'New Releases', 'My List', 'Sci-Fi', 'Award Winners'];
 
 const App: React.FC = () => {
   // ── Data State ─────────────────────────────────────────────────────────────
@@ -195,6 +193,10 @@ const App: React.FC = () => {
         base = base
           .filter(m => parseFloat(m.rating) >= 7.5)
           .sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+      } else if (activeCategory === 'New Releases') {
+        base = base
+          .filter(m => m.year >= 2023)
+          .sort((a, b) => b.year - a.year || parseFloat(b.rating) - parseFloat(a.rating));
       } else if (activeCategory === 'Sci-Fi') {
         base = base.filter(m =>
           m.genre.some(g => g.toLowerCase().includes('sci-fi') || g.toLowerCase().includes('fantasy') || g.toLowerCase().includes('science'))
@@ -252,7 +254,7 @@ const App: React.FC = () => {
             {/* ── Hero Slider ── */}
             <div className="sticky top-0 w-full z-0">
               <Hero
-                movies={movies.slice(0, 12)}
+                movies={movies.slice(0, 20)}
                 onPlay={setCurrentPlayerMovie}
               />
             </div>
@@ -293,7 +295,7 @@ const App: React.FC = () => {
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
                         className={`relative px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap border ${activeCategory === cat
-                          ? 'text-black bg-white border-white'
+                          ? 'text-black bg-yellow-400 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.35)]'
                           : 'text-zinc-400 border-zinc-800 bg-zinc-900/50 hover:border-zinc-600 hover:text-white'
                           }`}
                       >
@@ -316,12 +318,19 @@ const App: React.FC = () => {
                 </div>
 
                 {/* ── Main Movie Grid ── */}
-                <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10 min-h-[50vh]">
-                  <AnimatePresence mode="popLayout">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`${activeTab}-${activeCategory}`}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25 }}
+                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10 min-h-[50vh]"
+                  >
                     {filteredMovies.length > 0 ? (
                       filteredMovies.map((movie, index) => (
                         <MovieCard
-                          key={`${movie.id}-${activeCategory}`}
+                          key={movie.id}
                           movie={movie}
                           index={index}
                           onSelect={handleMovieSelect}
@@ -344,8 +353,8 @@ const App: React.FC = () => {
                         )}
                       </div>
                     )}
-                  </AnimatePresence>
-                </motion.div>
+                  </motion.div>
+                </AnimatePresence>
 
                 {/* ── Genre Browser ── */}
                 <GenreSection allMovies={movies} onSelectMovie={handleMovieSelect} />

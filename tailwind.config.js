@@ -8,7 +8,17 @@ export default {
         "./services/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
-        extend: {},
+        extend: {
+            fontFamily: {
+                hero:    ["'Bebas Neue'", 'Impact', 'system-ui', 'sans-serif'],
+                display: ['Outfit', 'system-ui', 'sans-serif'],
+                body:    ['Inter', 'system-ui', 'sans-serif'],
+                serif:   ['Cinzel', 'Georgia', 'serif'],
+            },
+            animation: {
+                'ken-burns': 'kenBurns 18s ease-in-out infinite',
+            },
+        },
     },
     plugins: [],
 }
