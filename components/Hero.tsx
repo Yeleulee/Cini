@@ -317,8 +317,8 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
         </motion.div>
       </AnimatePresence>
 
-      {/* ── Content ─────────────────────────────────────────────────────────── */}
-      <div className="absolute inset-0 z-20 flex flex-col justify-center pl-8 md:pl-16 lg:pl-24 pr-8 pt-20 pb-10">
+        {/* ── Content ─────────────────────────────────────────────────────────── */}
+      <div className="absolute inset-0 z-20 flex flex-col justify-center pl-6 sm:pl-8 md:pl-16 lg:pl-24 pr-6 pt-16 pb-24 md:pb-10">
 
         {/* ── Stagger group ─────────────────────────────────────────────────── */}
         <AnimatePresence mode="wait">
@@ -328,7 +328,7 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
             initial="hidden"
             animate="show"
             exit={{ opacity: 0, transition: { duration: 0.3 } }}
-            className="flex flex-col max-w-[52%] md:max-w-[46%] lg:max-w-[42%]"
+            className="flex flex-col max-w-[90%] sm:max-w-[70%] md:max-w-[55%] lg:max-w-[45%]"
           >
 
             {/* 1. Type badge — always gold */}
@@ -343,10 +343,10 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
             {/* 2. Title — Bebas Neue condensed cinematic font with subtle accent gradient & glow */}
             <motion.h1
               variants={itemVariants}
-              className="leading-none mb-5"
+              className="leading-none mb-3 sm:mb-5"
               style={{
                 fontFamily: "'Bebas Neue', Impact, sans-serif",
-                fontSize: 'clamp(3.5rem, 8vw, 7rem)',
+                fontSize: 'clamp(3rem, 10vw, 7rem)',
                 letterSpacing: '0.03em',
                 lineHeight: 0.92,
                 // Subtle gradient: pure white on top, accent colour gently blending in at the bottom
@@ -361,27 +361,27 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
             </motion.h1>
 
             {/* 3. Metadata pills */}
-            <motion.div variants={itemVariants} className="flex items-center flex-wrap gap-2 mb-5">
+            <motion.div variants={itemVariants} className="flex items-center flex-wrap gap-2 mb-4 sm:mb-5">
               <span className="flex items-center gap-1 text-yellow-400 text-xs font-bold px-2.5 py-1 rounded-full"
                 style={{ background: 'rgba(234,179,8,0.12)', border: '1px solid rgba(234,179,8,0.30)' }}>
                 <Star size={11} fill="currentColor" />
                 {movie.rating}
               </span>
               {durationLabel && (
-                <span className="text-xs font-semibold text-zinc-300 bg-white/8 border border-white/10 px-2.5 py-1 rounded-full">
+                <span className="text-[11px] sm:text-xs font-medium text-zinc-300 icon-glass px-2.5 py-1 rounded-full">
                   {durationLabel}
                 </span>
               )}
-              <span className="text-xs font-semibold text-zinc-300 bg-white/8 border border-white/10 px-2.5 py-1 rounded-full">
+              <span className="text-[11px] sm:text-xs font-medium text-zinc-300 icon-glass px-2.5 py-1 rounded-full">
                 {movie.year}
               </span>
               {movie.genre?.slice(0, 2).map(g => (
-                <span key={g} className="text-xs font-semibold text-zinc-200 bg-white/8 border border-white/10 px-2.5 py-1 rounded-full">
+                <span key={g} className="text-[11px] sm:text-xs font-semibold text-white liquid-panel px-3 py-1 rounded-full shadow-lg border border-white/10 uppercase tracking-wider">
                   {g}
                 </span>
               ))}
               {movie.quality === '4K' && (
-                <span className="text-[10px] font-black tracking-wider text-black bg-amber-400 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-black tracking-wider text-black bg-amber-400 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(251,191,36,0.4)]">
                   4K
                 </span>
               )}
@@ -390,7 +390,7 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
             {/* 4. Synopsis — Cinzel italic for cinematic review-quote feel */}
             <motion.p
               variants={itemVariants}
-              className="text-zinc-300 text-sm leading-relaxed mb-8 max-w-md border-l-2 border-yellow-500/60 pl-4 italic"
+              className="text-zinc-300 text-xs sm:text-sm leading-relaxed mb-6 sm:mb-8 max-w-md border-l-2 border-yellow-500/60 pl-3 sm:pl-4 italic drop-shadow-md line-clamp-3 sm:line-clamp-none"
               style={{ fontFamily: "'Cinzel', 'Georgia', serif", fontWeight: 400 }}
             >
               {synopsis}
@@ -401,17 +401,17 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
               {/* Play — gold CTA */}
               <button
                 onClick={() => onPlay(movie)}
-                className="btn-gold group flex items-center gap-2.5 px-7 py-3 rounded-xl text-sm active:scale-95"
+                className="btn-gold group flex items-center gap-2 sm:gap-2.5 px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl text-sm active:scale-95 transition-all"
               >
-                <Play size={18} fill="currentColor" />
+                <Play size={18} fill="currentColor" className="flex-shrink-0" />
                 Play
               </button>
               {/* Details — liquid glass */}
               <button
                 onClick={() => onPlay(movie)}
-                className="icon-glass flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold text-sm text-white active:scale-95"
+                className="icon-glass flex items-center gap-2 sm:gap-2.5 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold text-sm text-white active:scale-95 transition-all"
               >
-                <Info size={17} className="opacity-80" />
+                <Info size={17} className="opacity-80 flex-shrink-0" />
                 Details
               </button>
             </motion.div>
@@ -420,10 +420,11 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
         </AnimatePresence>
 
         {/* ── Bottom: dots (left) + [ ‹ thumbs › ] (right) ───────────────────── */}
-        <div className="absolute bottom-6 left-8 md:left-16 lg:left-24 right-8 flex items-center justify-between gap-4">
+        {/* Adjusted bottom property to prevent overlap with the mobile fixed bottom nav */}
+        <div className="absolute bottom-[88px] md:bottom-10 lg:bottom-12 left-6 sm:left-8 md:left-16 lg:left-24 right-6 sm:right-8 flex items-end sm:items-center justify-between gap-4 pointer-events-auto">
 
           {/* Progress dot pills */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0 mb-2 sm:mb-0">
             {movies.slice(0, Math.min(movies.length, 12)).map((_, i) => (
               <button
                 key={i}
@@ -439,7 +440,7 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
           </div>
 
           {/* Right side: prev · thumbnails · next */}
-          <div className="flex items-center gap-2 overflow-hidden">
+          <div className="hidden sm:flex items-center gap-2 overflow-hidden">
             <button
               onClick={() => advance(-1)}
               className="flex-shrink-0 w-8 h-8 rounded-full bg-black/55 backdrop-blur border border-white/15 flex items-center justify-center text-white hover:bg-white/20 transition-all duration-200 active:scale-90"
@@ -491,16 +492,6 @@ export const Hero: React.FC<HeroProps> = ({ movies, onPlay }) => {
 
       </div>
 
-      {/* ── Mobile play button ───────────────────────────────────────────────── */}
-      <div className="md:hidden absolute bottom-28 left-8 z-30">
-        <button
-          onClick={() => onPlay(movie)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95"
-        >
-          <Play size={16} fill="currentColor" />
-          Play Now
-        </button>
-      </div>
 
     </div>
   );

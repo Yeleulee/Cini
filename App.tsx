@@ -296,7 +296,7 @@ const App: React.FC = () => {
                         onClick={() => setActiveCategory(cat)}
                         className={`relative px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap border ${activeCategory === cat
                           ? 'text-black bg-yellow-400 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.35)]'
-                          : 'text-zinc-400 border-zinc-800 bg-zinc-900/50 hover:border-zinc-600 hover:text-white'
+                          : 'icon-glass text-zinc-300 border-transparent hover:border-white/10 hover:text-white shadow-lg'
                           }`}
                       >
                         {cat === 'My List' && (
