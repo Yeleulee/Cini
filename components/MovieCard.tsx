@@ -11,14 +11,14 @@ interface MovieCardProps {
 
 const WATCHLIST_KEY = 'cineflow_watchlist';
 
-function readWatchlistIds(): string[] {
+export function readWatchlistIds(): string[] {
     try {
         const wl: Movie[] = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]');
         return wl.map((m) => m.id);
     } catch { return []; }
 }
 
-function toggleWatchlistItem(movie: Movie): boolean {
+export function toggleWatchlistItem(movie: Movie): boolean {
     try {
         const wl: Movie[] = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]');
         const exists = wl.some((m) => m.id === movie.id);
@@ -31,16 +31,14 @@ function toggleWatchlistItem(movie: Movie): boolean {
 }
 
 // Fallback SVG — zero network dependency
-const FALLBACK_POSTER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600'%3E%3Crect width='400' height='600' fill='%2318181b'/%3E%3Ctext x='200' y='310' text-anchor='middle' font-size='52' fill='%2352525b'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E";
+const FALLBACK_POSTER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600'%3E%3Crect width='400' height='600' fill='%2317171b'/%3E%3Ctext x='200' y='310' text-anchor='middle' font-size='52' fill='%23444'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E";
 
 export const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onSelect }) => {
     const [inWatchlist, setInWatchlist] = useState(false);
-    const [isHovered,   setIsHovered]   = useState(false);
     const [imgSrc,      setImgSrc]      = useState(movie.posterUrl);
     const [imgLoaded,   setImgLoaded]   = useState(false);
     const [fallbackStage, setFallbackStage] = useState(0);
 
-    // Reset image when movie changes
     useEffect(() => {
         setImgSrc(movie.posterUrl);
         setImgLoaded(false);
@@ -48,11 +46,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onSelect }) 
     }, [movie.id, movie.posterUrl]);
 
     useEffect(() => {
-        setInWatchlist(readWatchlistIds().includes(movie.id));
-    }, [movie.id]);
-
-    useEffect(() => {
         const sync = () => setInWatchlist(readWatchlistIds().includes(movie.id));
+        sync();
         window.addEventListener('watchlistUpdated', sync);
         return () => window.removeEventListener('watchlistUpdated', sync);
     }, [movie.id]);
@@ -74,90 +69,62 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onSelect }) 
         }
     };
 
-    const ratingNum = parseFloat(movie.rating);
-    const ratingColor = ratingNum >= 8.0 ? 'text-emerald-400' : ratingNum >= 7.0 ? 'text-yellow-400' : 'text-zinc-400';
-
     return (
         <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ delay: Math.min(index * 0.04, 0.35), duration: 0.35 }}
-            className="group relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer bg-zinc-900 border border-white/5 hover:border-yellow-500/25 transition-colors duration-300"
+            transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.35, ease: [0.25, 1, 0.5, 1] }}
             onClick={() => onSelect(movie)}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            className="group/card block w-full origin-center cursor-pointer transition-transform duration-500 ease-out lg:hover:scale-105 hover:z-50"
         >
-            {/* Skeleton shimmer */}
-            {!imgLoaded && (
-                <div className="absolute inset-0 bg-zinc-800 animate-pulse">
-                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-700/40 via-transparent to-zinc-900/40" />
+            <div className="relative isolate aspect-[2/3] overflow-hidden rounded-xl bg-white/5 shadow-xl shadow-black/40">
+                {!imgLoaded && <div className="absolute inset-0 animate-pulse bg-white/5" />}
+
+                <img
+                    src={imgSrc}
+                    alt={movie.title}
+                    loading="lazy"
+                    onLoad={() => setImgLoaded(true)}
+                    onError={handleImgError}
+                    className={`block h-full w-full object-cover transition-all duration-300 lg:group-hover/card:brightness-50 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                />
+
+                {/* Watchlist toggle */}
+                <button
+                    onClick={handleWatchlist}
+                    aria-label={inWatchlist ? 'Remove from My List' : 'Add to My List'}
+                    className={`glass-header absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-300 active:scale-90 ${
+                        inWatchlist ? 'opacity-100' : 'opacity-0 lg:group-hover/card:opacity-100'
+                    }`}
+                >
+                    {inWatchlist ? <Check size={14} strokeWidth={3} /> : <Plus size={14} strokeWidth={2.5} />}
+                </button>
+
+                {/* Hover overlay — desktop only */}
+                <div className="hidden lg:flex absolute inset-0 flex-col items-center justify-center p-4 text-center opacity-0 translate-y-4 transition-all duration-300 group-hover/card:translate-y-0 group-hover/card:opacity-100">
+                    <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 backdrop-blur-md">
+                        <Play size={20} fill="currentColor" className="ml-0.5 text-white" />
+                    </span>
+                    <h3 className="text-sm font-bold leading-tight text-white line-clamp-2 drop-shadow-md">{movie.title}</h3>
+                    <div className="mt-1.5 flex items-center gap-2 text-xs text-white/80">
+                        <span>{movie.year}</span>
+                        <span className="flex items-center gap-1">
+                            <Star size={11} className="text-yellow-400" fill="currentColor" />
+                            {movie.rating}
+                        </span>
+                    </div>
                 </div>
-            )}
-
-            {/* Poster image */}
-            <img
-                src={imgSrc}
-                alt={movie.title}
-                loading="lazy"
-                onLoad={() => setImgLoaded(true)}
-                onError={handleImgError}
-                className={`w-full h-full object-cover transition-all duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'} ${isHovered ? 'scale-110' : 'scale-100'}`}
-            />
-
-            {/* Persistent bottom gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-
-            {/* Quality badge — top left (liquid glass) */}
-            <div className="absolute top-2.5 left-2.5">
-                <span className={`icon-glass text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                    movie.quality === '4K' ? 'text-yellow-400 active' : 'text-white'
-                }`}>
-                    {movie.quality}
-                </span>
             </div>
 
-            {/* Watchlist toggle — top right (liquid glass) */}
-            <motion.button
-                onClick={handleWatchlist}
-                whileTap={{ scale: 0.85 }}
-                title={inWatchlist ? 'Remove from My List' : 'Add to My List'}
-                className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full icon-glass flex items-center justify-center z-10 transition-all duration-200 ${
-                    inWatchlist ? 'active text-yellow-400 opacity-100' : 'text-white opacity-0 group-hover:opacity-100'
-                }`}
-            >
-                {inWatchlist ? <Check size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={2.5} />}
-            </motion.button>
-
-            {/* Hover play overlay (liquid glass) */}
-            <motion.div
-                initial={false}
-                animate={{ opacity: isHovered ? 1 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="absolute inset-0 flex items-center justify-center"
-            >
-                <div className="w-14 h-14 rounded-full icon-glass flex items-center justify-center shadow-xl">
-                    <Play size={22} className="text-yellow-400 ml-1" fill="currentColor" />
-                </div>
-            </motion.div>
-
-            {/* Bottom info */}
-            <div className="absolute bottom-0 left-0 right-0 p-3">
-                {movie.genre[0] && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1 block">
-                        {movie.type === 'series' ? '📺 ' : '🎬 '}
-                        {movie.genre[0]}
-                    </span>
-                )}
-                <h3 className="text-white font-bold text-sm leading-tight truncate mb-1">{movie.title}</h3>
-                <div className="flex items-center gap-1.5 text-[10px]">
-                    <span className="text-zinc-500">{movie.year}</span>
-                    <span className="text-zinc-700">·</span>
-                    <Star size={8} className={`${ratingColor} fill-current`} />
-                    <span className={`font-bold ${ratingColor}`}>{movie.rating}</span>
-                    <span className="text-zinc-700">·</span>
-                    <span className="text-zinc-500 truncate">{movie.duration}</span>
-                </div>
+            {/* Caption — mobile only */}
+            <div className="mt-2 px-0.5 lg:hidden">
+                <p className="text-sm font-semibold text-white line-clamp-1">{movie.title}</p>
+                <p className="flex items-center gap-1.5 text-xs text-white/60">
+                    <span>{movie.year}</span>
+                    <span>·</span>
+                    <Star size={10} className="text-yellow-400" fill="currentColor" />
+                    <span>{movie.rating}</span>
+                </p>
             </div>
         </motion.div>
     );

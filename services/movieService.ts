@@ -422,8 +422,8 @@ export const getFeaturedContent = async (
                         } else {
                             _liveCatalogue = [..._liveCatalogue, movie];
                         }
-                        // Notify UI with shuffled result so Hero rotates differently each call
-                        onUpdate?.(shuffleArray([..._liveCatalogue]));
+                        // Keep order stable while hydrating so the Hero slide doesn't jump under the user
+                        onUpdate?.([..._liveCatalogue]);
                     }
                 } catch (_) { /* keep fallback for this ID */ }
             });

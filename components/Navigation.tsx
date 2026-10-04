@@ -1,6 +1,8 @@
 import React from 'react';
-import { Home, Search, Film, Tv, Layers, Zap } from 'lucide-react';
+import { Home, Film, Tv, Bookmark, Search, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+type TabId = 'HOME' | 'MOVIES' | 'SERIES' | 'COLLECTIONS';
 
 interface NavigationProps {
   onSearchClick: () => void;
@@ -8,8 +10,17 @@ interface NavigationProps {
   onMoviesClick?: () => void;
   onSeriesClick?: () => void;
   onCollectionsClick?: () => void;
-  activeTab?: 'HOME' | 'MOVIES' | 'SERIES' | 'COLLECTIONS';
+  activeTab?: TabId;
 }
+
+const ITEMS: { id: TabId; label: string; icon: React.ElementType }[] = [
+  { id: 'HOME',        label: 'Home',    icon: Home },
+  { id: 'MOVIES',      label: 'Movies',  icon: Film },
+  { id: 'SERIES',      label: 'Shows',   icon: Tv },
+  { id: 'COLLECTIONS', label: 'My List', icon: Bookmark },
+];
+
+const pillSpring = { type: 'spring' as const, stiffness: 420, damping: 32, mass: 0.8 };
 
 export const Navigation: React.FC<NavigationProps> = ({
   onSearchClick,
@@ -17,89 +28,122 @@ export const Navigation: React.FC<NavigationProps> = ({
   onMoviesClick,
   onSeriesClick,
   onCollectionsClick,
-  activeTab = 'HOME'
+  activeTab = 'HOME',
 }) => {
+  const handlers: Record<TabId, (() => void) | undefined> = {
+    HOME: onHomeClick,
+    MOVIES: onMoviesClick,
+    SERIES: onSeriesClick,
+    COLLECTIONS: onCollectionsClick,
+  };
+
   return (
-    <motion.nav
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2, duration: 0.5 }}
-      className="fixed z-50 transition-all duration-500 bg-transparent pointer-events-auto
-                 /* Mobile: Bottom bar */
-                 bottom-4 left-4 right-4 h-16 rounded-2xl flex flex-row items-center justify-around px-2
-                 /* Desktop: Side pill */
-                 md:bottom-auto md:left-6 md:right-auto md:top-1/2 md:-translate-y-1/2 md:w-20 md:h-auto md:flex-col md:py-8 md:gap-6 md:rounded-[2rem]"
-    >
-      {/* Logo mark — desktop only */}
-      <div className="hidden md:flex mb-1 w-10 h-10 rounded-full icon-glass items-center justify-center">
-        <Zap className="w-5 h-5 text-yellow-400" fill="currentColor" />
-      </div>
-
-      <div className="flex flex-row md:flex-col gap-1 md:gap-3 w-full justify-around md:justify-start items-center">
-        <NavItem icon={<Home    size={20} />} label="Home"        active={activeTab === 'HOME'}        onClick={onHomeClick} />
-        <NavItem icon={<Search  size={20} />} label="Search"                                          onClick={onSearchClick} />
-        <NavItem icon={<Film    size={20} />} label="Movies"      active={activeTab === 'MOVIES'}      onClick={onMoviesClick} />
-        <NavItem icon={<Tv      size={20} />} label="Series"      active={activeTab === 'SERIES'}      onClick={onSeriesClick} />
-        <NavItem icon={<Layers  size={20} />} label="Collections" active={activeTab === 'COLLECTIONS'} onClick={onCollectionsClick} />
-      </div>
-
-      {/* User avatar — desktop only */}
-      <div className="hidden md:flex mt-2 pt-4 border-t border-white/8 w-full justify-center">
-        <button className="relative group">
-          <div className="w-10 h-10 rounded-full icon-glass p-[2px] flex items-center justify-center overflow-hidden">
-            <img
-              src="https://randomuser.me/api/portraits/men/32.jpg"
-              alt="User"
-              className="w-full h-full rounded-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-            />
-          </div>
-          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 border-2 border-[#09090b] rounded-full" />
+    <>
+      {/* ── Top header: logo left, glass pill right (desktop) ─────────────── */}
+      <motion.header
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
+        className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 lg:px-12 py-4 lg:py-6 pointer-events-none"
+      >
+        <button
+          onClick={onHomeClick}
+          aria-label="Home"
+          className="pointer-events-auto flex items-center gap-2.5 text-white drop-shadow-md active:scale-95 transition-transform"
+        >
+          <span className="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center font-bold text-lg leading-none">
+            C
+          </span>
+          <span className="text-xl font-semibold tracking-tight">Cini</span>
         </button>
-      </div>
-    </motion.nav>
+
+        <nav
+          role="tablist"
+          className="hidden lg:flex glass-header relative items-center gap-1 rounded-full p-[6px] pointer-events-auto"
+        >
+          {ITEMS.map(({ id, label, icon: Icon }) => {
+            const active = id === activeTab;
+            return (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={active}
+                onClick={handlers[id]}
+                className={`relative z-10 flex h-10 items-center justify-center gap-2 rounded-full px-6 text-sm font-medium whitespace-nowrap transition-colors duration-300 ${
+                  active ? 'text-black' : 'text-white/60 hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="nav-pill"
+                    transition={pillSpring}
+                    className="nav-pill absolute inset-0 -z-10 rounded-full bg-white"
+                  />
+                )}
+                {active && <Icon size={16} strokeWidth={2.25} />}
+                {label}
+              </button>
+            );
+          })}
+
+          <span className="mx-1 h-5 w-px bg-white/10" />
+
+          <button
+            onClick={onSearchClick}
+            aria-label="Search"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition-all duration-300 hover:bg-white/10 hover:text-white hover:scale-110 active:scale-95"
+          >
+            <Search size={18} />
+          </button>
+          <button
+            aria-label="Settings"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition-all duration-300 hover:bg-white/10 hover:text-white hover:scale-110 active:scale-95"
+          >
+            <Settings size={18} />
+          </button>
+        </nav>
+
+        {/* Mobile: search shortcut top-right */}
+        <button
+          onClick={onSearchClick}
+          aria-label="Search"
+          className="lg:hidden pointer-events-auto glass-header flex h-10 w-10 items-center justify-center rounded-full text-white active:scale-95 transition-transform"
+        >
+          <Search size={18} />
+        </button>
+      </motion.header>
+
+      {/* ── Mobile bottom glass bar ──────────────────────────────────────────── */}
+      <motion.nav
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
+        className="lg:hidden fixed bottom-4 inset-x-4 z-50 glass-header flex items-center rounded-full p-[6px]"
+      >
+        {ITEMS.map(({ id, label, icon: Icon }) => {
+          const active = id === activeTab;
+          return (
+            <button
+              key={id}
+              onClick={handlers[id]}
+              aria-label={label}
+              className={`relative z-10 flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[10px] font-medium transition-colors duration-300 ${
+                active ? 'text-black' : 'text-white/60'
+              }`}
+            >
+              {active && (
+                <motion.span
+                  layoutId="nav-pill-mobile"
+                  transition={pillSpring}
+                  className="nav-pill absolute inset-0 -z-10 rounded-full bg-white"
+                />
+              )}
+              <Icon size={18} strokeWidth={active ? 2.5 : 2} />
+              {label}
+            </button>
+          );
+        })}
+      </motion.nav>
+    </>
   );
 };
-
-interface NavItemProps {
-  icon: React.ReactNode;
-  active?: boolean;
-  onClick?: () => void;
-  label: string;
-}
-
-const NavItem: React.FC<NavItemProps> = ({ icon, active, onClick, label }) => (
-  <button
-    onClick={onClick}
-    data-active={active ? 'true' : undefined}
-    className={`relative group w-11 h-11 rounded-full icon-glass flex items-center justify-center transition-all duration-300 ${
-      active ? 'active' : ''
-    }`}
-  >
-    {/* Icon */}
-    <span className={`transition-colors duration-300 ${active ? 'text-yellow-400' : 'text-zinc-400 group-hover:text-white'}`}>
-      {icon}
-    </span>
-
-    {/* Active pill — desktop: right edge */}
-    {active && (
-      <motion.div
-        layoutId="activeNavDot"
-        className="hidden md:block absolute right-[-6px] top-1/2 -translate-y-1/2 w-1 h-5 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.8)]"
-      />
-    )}
-
-    {/* Active dot — mobile: bottom */}
-    {active && (
-      <motion.div
-        layoutId="activeNavDotMobile"
-        className="block md:hidden absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-yellow-400 rounded-full"
-      />
-    )}
-
-    {/* Tooltip — desktop hover */}
-    <div className="hidden md:block absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3 py-1.5 liquid-panel text-white text-xs font-semibold rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap shadow-xl z-50">
-      {label}
-      <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-[rgba(255,255,255,0.08)]" />
-    </div>
-  </button>
-);

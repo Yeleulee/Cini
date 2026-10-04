@@ -10,10 +10,18 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                hero:    ["'Bebas Neue'", 'Impact', 'system-ui', 'sans-serif'],
-                display: ['Outfit', 'system-ui', 'sans-serif'],
-                body:    ['Inter', 'system-ui', 'sans-serif'],
-                serif:   ['Cinzel', 'Georgia', 'serif'],
+                sans:    ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Inter', 'sans-serif'],
+                hero:    ['ui-sans-serif', 'system-ui', 'sans-serif'],
+                display: ['ui-sans-serif', 'system-ui', 'sans-serif'],
+                body:    ['ui-sans-serif', 'system-ui', 'sans-serif'],
+                serif:   ['ui-sans-serif', 'system-ui', 'sans-serif'],
+            },
+            colors: {
+                surface: {
+                    DEFAULT: '#050505',
+                    raised:  '#17171b',
+                    strong:  '#1e1e24',
+                },
             },
             animation: {
                 'ken-burns': 'kenBurns 18s ease-in-out infinite',
