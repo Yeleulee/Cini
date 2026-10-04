@@ -272,7 +272,8 @@ export async function getGenreMovies(
                     try {
                         const res = await fetch(`${BASE_URL}?apikey=${getApiKey()}&i=${id}&plot=full`);
                         const data = await res.json();
-                        if (data.Response === 'True') {
+                        // Skip stray episode records OMDb returns for some curated ids
+                        if (data.Response === 'True' && data.Type !== 'episode') {
                             const movie = omdbToMovie(data);
                             seen.add(id);
                             accumulated = [...accumulated, movie];

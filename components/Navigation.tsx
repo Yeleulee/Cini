@@ -51,9 +51,12 @@ export const Navigation: React.FC<NavigationProps> = ({
           aria-label="Home"
           className="pointer-events-auto flex items-center gap-2.5 text-white drop-shadow-md active:scale-95 transition-transform"
         >
-          <span className="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center font-bold text-lg leading-none">
-            C
-          </span>
+          <img
+            src="/logo.png"
+            alt=""
+            className="h-11 w-11 object-contain select-none"
+            draggable={false}
+          />
           <span className="text-xl font-semibold tracking-tight">Cini</span>
         </button>
 

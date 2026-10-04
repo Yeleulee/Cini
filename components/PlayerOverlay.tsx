@@ -321,30 +321,18 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({ movie, onClose }) 
                 )}
             </AnimatePresence>
 
-            {/* ── Header ── */}
-            <div
-                className={`fixed top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-[70] transition-all duration-500 ${isPlaying && !showControls ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}
-            >
-                <div className="flex items-center gap-3">
-                    {isPlaying ? (
-                        <button
-                            onClick={() => { setIsPlaying(false); setShowEpisodePanel(false); }}
-                            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10"
-                        >
-                            <ArrowLeft size={16} />
-                            <span className="text-xs font-bold tracking-widest uppercase">Back</span>
-                        </button>
-                    ) : (
-                        <div className="w-9 h-9 rounded-full bg-yellow-500 flex items-center justify-center font-bold text-black font-serif-display text-sm">C</div>
-                    )}
+            {/* ── Header (info screen only; the active player has its own top bar) ── */}
+            {!isPlaying && (
+                <div className="fixed top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-[70]">
+                    <div className="w-9 h-9 rounded-full bg-yellow-500 flex items-center justify-center font-bold text-black font-serif-display text-sm">C</div>
+                    <button
+                        onClick={onClose}
+                        className="w-10 h-10 rounded-full border border-white/10 bg-black/20 hover:bg-white hover:text-black flex items-center justify-center transition-all duration-300 group backdrop-blur-md"
+                    >
+                        <X size={18} className="group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
                 </div>
-                <button
-                    onClick={onClose}
-                    className="w-10 h-10 rounded-full border border-white/10 bg-black/20 hover:bg-white hover:text-black flex items-center justify-center transition-all duration-300 group backdrop-blur-md"
-                >
-                    <X size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-                </button>
-            </div>
+            )}
 
             {/* ── INFO SCREEN ── */}
             <div className={`relative min-h-screen transition-opacity duration-500 ${isPlaying ? 'opacity-0 pointer-events-none absolute inset-0' : 'opacity-100'}`}>

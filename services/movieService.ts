@@ -369,12 +369,15 @@ export const searchMovies = async (query: string): Promise<Movie[]> => {
     }
 };
 
+// OMDb occasionally maps a curated id to a stray TV episode (e.g. tt12566356) — never let that replace real data.
+const isUsableOmdbRecord = (data: any) => data?.Response === 'True' && data.Type !== 'episode';
+
 export const getMovieDetails = async (id: string): Promise<Movie | null> => {
     if (_cache.has(id)) return _cache.get(id)!;
     try {
         const response = await fetch(`${BASE_URL}?apikey=${getApiKey()}&i=${id}&plot=full`);
         const data = await response.json();
-        if (data.Response === 'True') {
+        if (isUsableOmdbRecord(data)) {
             const movie = mapOmdbToMovie(data);
             _cache.set(id, movie);
             return movie;
@@ -412,7 +415,7 @@ export const getFeaturedContent = async (
                 try {
                     const response = await fetch(`${BASE_URL}?apikey=${getApiKey()}&i=${id}&plot=full`);
                     const data = await response.json();
-                    if (data.Response === 'True') {
+                    if (isUsableOmdbRecord(data)) {
                         const movie = mapOmdbToMovie(data);
                         _cache.set(id, movie);
                         // Add or replace in the live catalogue
